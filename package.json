@@ -1,0 +1,37 @@
+{
+  "name": "personal-finance-tracker",
+  "version": "1.0.0",
+  "description": "Industry-standard fullstack application for personal finance management",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm install --workspace=backend && npm install --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "test:backend": "npm test --workspace=backend",
+    "test:frontend": "npm test --workspace=frontend",
+    "test": "npm run test:backend && npm run test:frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\""
+  },
+  "keywords": [
+    "finance",
+    "budget",
+    "expense-tracker",
+    "fullstack",
+    "nodejs",
+    "react",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.1.1"
+  }
+}
