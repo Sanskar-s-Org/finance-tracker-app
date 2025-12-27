@@ -63,18 +63,22 @@ export const getDashboardSummary = async (req, res, next) => {
 
     const balance = income - expense;
 
-    // Get current month boundaries for category breakdown (always current month)
-    const monthStart = new Date(currentYear, currentMonth, 1);
-    const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+    // Use the same date range for category breakdown as the main summary
+    // This ensures consistency across all dashboard data
+    const categoryFilter = {
+      user: req.user._id,
+      type: 'expense',
+    };
 
-    // Get category breakdown
+    // Apply date filter if we have a specific period
+    if (startDate && endDate) {
+      categoryFilter.date = { $gte: startDate, $lte: endDate };
+    }
+
+    // Get category breakdown using the same period as summary
     const categoryBreakdown = await Transaction.aggregate([
       {
-        $match: {
-          user: req.user._id,
-          type: 'expense',
-          date: { $gte: monthStart, $lte: monthEnd },
-        },
+        $match: categoryFilter,
       },
       {
         $group: {

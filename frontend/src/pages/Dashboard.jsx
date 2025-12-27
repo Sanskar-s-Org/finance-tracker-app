@@ -27,6 +27,25 @@ const Dashboard = () => {
     loadDashboard();
   }, [period]);
 
+  // Auto-refresh when page becomes visible or user navigates to dashboard
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadDashboard();
+      }
+    };
+
+    // Listen for visibility changes (tab switches)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Refresh on mount (when user navigates to dashboard)
+    loadDashboard();
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []); // Empty deps - only on mount/unmount
+
   const loadDashboard = async () => {
     try {
       const [summaryRes, trendsRes, insightsRes, alertsRes] = await Promise.all([
