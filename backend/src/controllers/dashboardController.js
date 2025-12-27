@@ -7,18 +7,50 @@ import logger from '../config/logger.js';
 // @access  Private
 export const getDashboardSummary = async (req, res, next) => {
   try {
+    const { period = 'thisMonth' } = req.query;
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    // Get current month transactions
-    const monthStart = new Date(currentYear, currentMonth, 1);
-    const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+    // Calculate date range based on period
+    let startDate, endDate;
 
-    const transactions = await Transaction.find({
-      user: req.user._id,
-      date: { $gte: monthStart, $lte: monthEnd },
-    });
+    switch (period) {
+      case 'lastMonth': {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        startDate = new Date(lastMonthYear, lastMonth, 1);
+        endDate = new Date(lastMonthYear, lastMonth + 1, 0, 23, 59, 59);
+        break;
+      }
+      case 'last3Months': {
+        startDate = new Date(currentYear, currentMonth - 3, 1);
+        endDate = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+        break;
+      }
+      case 'thisYear':
+        startDate = new Date(currentYear, 0, 1);
+        endDate = new Date(currentYear, 11, 31, 23, 59, 59);
+        break;
+      case 'allTime':
+        startDate = null;
+        endDate = null;
+        break;
+      case 'thisMonth':
+      default:
+        startDate = new Date(currentYear, currentMonth, 1);
+        endDate = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+        break;
+    }
+
+    // Build query filter
+    const filter = { user: req.user._id };
+    if (startDate && endDate) {
+      filter.date = { $gte: startDate, $lte: endDate };
+    }
+
+    // Get transactions based on period
+    const transactions = await Transaction.find(filter);
 
     // Calculate totals
     const income = transactions
@@ -30,6 +62,10 @@ export const getDashboardSummary = async (req, res, next) => {
       .reduce((sum, t) => sum + t.amount, 0);
 
     const balance = income - expense;
+
+    // Get current month boundaries for category breakdown (always current month)
+    const monthStart = new Date(currentYear, currentMonth, 1);
+    const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
 
     // Get category breakdown
     const categoryBreakdown = await Transaction.aggregate([
@@ -102,6 +138,7 @@ export const getDashboardSummary = async (req, res, next) => {
         categoryBreakdown,
         recentTransactions,
         period: {
+          selected: period,
           month: currentMonth + 1,
           year: currentYear,
         },

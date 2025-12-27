@@ -7,6 +7,7 @@ const Budgets = () => {
   const [budgets, setBudgets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     category: '',
     amount: '',
@@ -42,7 +43,11 @@ const Budgets = () => {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await budgetService.create(formData);
+      if (editingId) {
+        await budgetService.update(editingId, formData);
+      } else {
+        await budgetService.create(formData);
+      }
       setFormData({
         category: '',
         amount: '',
@@ -50,11 +55,36 @@ const Budgets = () => {
         year: new Date().getFullYear(),
         alertThreshold: 80,
       });
+      setEditingId(null);
       setShowForm(false);
       await loadData();
     } catch (err) {
-      alert('Error creating budget');
+      alert(editingId ? 'Error updating budget' : 'Error creating budget');
     }
+  };
+
+  const handleEdit = budget => {
+    setFormData({
+      category: budget.category._id,
+      amount: budget.amount,
+      month: budget.month,
+      year: budget.year,
+      alertThreshold: budget.alertThreshold,
+    });
+    setEditingId(budget._id);
+    setShowForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({
+      category: '',
+      amount: '',
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear(),
+      alertThreshold: 80,
+    });
+    setEditingId(null);
+    setShowForm(false);
   };
 
   const handleDelete = async id => {
@@ -90,7 +120,7 @@ const Budgets = () => {
       <div className="flex-between mb-3">
         <h1>Budgets</h1>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => editingId ? handleCancelEdit() : setShowForm(!showForm)}
           className="btn btn-primary"
         >
           {showForm ? 'Cancel' : '+ Add Budget'}
@@ -99,7 +129,7 @@ const Budgets = () => {
 
       {showForm && (
         <div className="card mb-3 fade-in">
-          <h3>New Budget</h3>
+          <h3>{editingId ? 'Edit Budget' : 'New Budget'}</h3>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-2">
               <div className="form-group">
@@ -192,7 +222,7 @@ const Budgets = () => {
             </div>
 
             <button type="submit" className="btn btn-success">
-              Save Budget
+              {editingId ? 'Update Budget' : 'Save Budget'}
             </button>
           </form>
         </div>
@@ -222,13 +252,22 @@ const Budgets = () => {
                   </span>
                   <h4 style={{ margin: 0 }}>{budget.category.name}</h4>
                 </div>
-                <button
-                  onClick={() => handleDelete(budget._id)}
-                  className="btn btn-danger"
-                  style={{ padding: '0.5rem 1rem' }}
-                >
-                  Delete
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => handleEdit(budget)}
+                    className="btn btn-primary"
+                    style={{ padding: '0.5rem 1rem' }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(budget._id)}
+                    className="btn btn-danger"
+                    style={{ padding: '0.5rem 1rem' }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
 
               <div className="mb-2">

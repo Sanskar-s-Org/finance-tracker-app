@@ -9,10 +9,12 @@ const Transactions = () => {
     fetchTransactions,
     fetchCategories,
     addTransaction,
+    updateTransaction,
     deleteTransaction,
   } = useFinance();
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     type: 'expense',
     amount: '',
@@ -21,7 +23,13 @@ const Transactions = () => {
     date: new Date().toISOString().split('T')[0],
     paymentMethod: 'cash',
   });
-  const [filter, setFilter] = useState({ type: '' });
+  const [filter, setFilter] = useState({
+    type: '',
+    category: '',
+    paymentMethod: '',
+    dateFrom: '',
+    dateTo: '',
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,7 +49,11 @@ const Transactions = () => {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await addTransaction(formData);
+      if (editingId) {
+        await updateTransaction(editingId, formData);
+      } else {
+        await addTransaction(formData);
+      }
       setFormData({
         type: 'expense',
         amount: '',
@@ -50,11 +62,38 @@ const Transactions = () => {
         date: new Date().toISOString().split('T')[0],
         paymentMethod: 'cash',
       });
+      setEditingId(null);
       setShowForm(false);
       await fetchTransactions();
     } catch (err) {
-      alert('Error creating transaction');
+      alert(editingId ? 'Error updating transaction' : 'Error creating transaction');
     }
+  };
+
+  const handleEdit = transaction => {
+    setFormData({
+      type: transaction.type,
+      amount: transaction.amount,
+      category: transaction.category._id,
+      description: transaction.description || '',
+      date: new Date(transaction.date).toISOString().split('T')[0],
+      paymentMethod: transaction.paymentMethod,
+    });
+    setEditingId(transaction._id);
+    setShowForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({
+      type: 'expense',
+      amount: '',
+      category: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0],
+      paymentMethod: 'cash',
+    });
+    setEditingId(null);
+    setShowForm(false);
   };
 
   const handleDelete = async id => {
@@ -68,9 +107,44 @@ const Transactions = () => {
     }
   };
 
-  const filteredTransactions = filter.type
-    ? transactions.filter(t => t.type === filter.type)
-    : transactions;
+  const filteredTransactions = transactions.filter(transaction => {
+    // Type filter
+    if (filter.type && transaction.type !== filter.type) return false;
+
+    // Category filter
+    if (filter.category && transaction.category._id !== filter.category) return false;
+
+    // Payment method filter
+    if (filter.paymentMethod && transaction.paymentMethod !== filter.paymentMethod) return false;
+
+    // Date range filter
+    if (filter.dateFrom) {
+      const transactionDate = new Date(transaction.date);
+      const fromDate = new Date(filter.dateFrom);
+      if (transactionDate < fromDate) return false;
+    }
+
+    if (filter.dateTo) {
+      const transactionDate = new Date(transaction.date);
+      const toDate = new Date(filter.dateTo);
+      toDate.setHours(23, 59, 59); // Include the entire day
+      if (transactionDate > toDate) return false;
+    }
+
+    return true;
+  });
+
+  const clearFilters = () => {
+    setFilter({
+      type: '',
+      category: '',
+      paymentMethod: '',
+      dateFrom: '',
+      dateTo: '',
+    });
+  };
+
+  const hasActiveFilters = filter.type || filter.category || filter.paymentMethod || filter.dateFrom || filter.dateTo;
 
   const expenseCategories = categories.filter(c => c.type === formData.type);
 
@@ -96,7 +170,7 @@ const Transactions = () => {
       <div className="flex-between mb-3">
         <h1>Transactions</h1>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => editingId ? handleCancelEdit() : setShowForm(!showForm)}
           className="btn btn-primary"
         >
           {showForm ? 'Cancel' : '+ Add Transaction'}
@@ -105,7 +179,7 @@ const Transactions = () => {
 
       {showForm && (
         <div className="card mb-3 fade-in">
-          <h3>New Transaction</h3>
+          <h3>{editingId ? 'Edit Transaction' : 'New Transaction'}</h3>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-2">
               <div className="form-group">
@@ -204,34 +278,107 @@ const Transactions = () => {
             </div>
 
             <button type="submit" className="btn btn-success">
-              Save Transaction
+              {editingId ? 'Update Transaction' : 'Save Transaction'}
             </button>
           </form>
         </div>
       )}
 
-      {/* Filters */}
+      {/* Enhanced Filters */}
       <div className="card mb-3">
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button
-            className={`btn ${!filter.type ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setFilter({ type: '' })}
-          >
-            All
-          </button>
-          <button
-            className={`btn ${filter.type === 'income' ? 'btn-success' : 'btn-outline'}`}
-            onClick={() => setFilter({ type: 'income' })}
-          >
-            Income
-          </button>
-          <button
-            className={`btn ${filter.type === 'expense' ? 'btn-danger' : 'btn-outline'}`}
-            onClick={() => setFilter({ type: 'expense' })}
-          >
-            Expenses
-          </button>
+        <h4 style={{ marginBottom: '1rem' }}>Filters</h4>
+
+        {/* Type Filter */}
+        <div style={{ marginBottom: '1rem' }}>
+          <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Transaction Type</label>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              className={`btn ${!filter.type ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setFilter({ ...filter, type: '' })}
+              style={{ flex: '1', minWidth: '100px' }}
+            >
+              All
+            </button>
+            <button
+              className={`btn ${filter.type === 'income' ? 'btn-success' : 'btn-outline'}`}
+              onClick={() => setFilter({ ...filter, type: 'income' })}
+              style={{ flex: '1', minWidth: '100px' }}
+            >
+              Income
+            </button>
+            <button
+              className={`btn ${filter.type === 'expense' ? 'btn-danger' : 'btn-outline'}`}
+              onClick={() => setFilter({ ...filter, type: 'expense' })}
+              style={{ flex: '1', minWidth: '100px' }}
+            >
+              Expenses
+            </button>
+          </div>
         </div>
+
+        {/* Additional Filters */}
+        <div className="grid grid-2" style={{ marginBottom: '1rem' }}>
+          <div className="form-group">
+            <label className="form-label">Category</label>
+            <select
+              className="form-select"
+              value={filter.category}
+              onChange={e => setFilter({ ...filter, category: e.target.value })}
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.icon} {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Payment Method</label>
+            <select
+              className="form-select"
+              value={filter.paymentMethod}
+              onChange={e => setFilter({ ...filter, paymentMethod: e.target.value })}
+            >
+              <option value="">All Methods</option>
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">From Date</label>
+            <input
+              type="date"
+              className="form-input"
+              value={filter.dateFrom}
+              onChange={e => setFilter({ ...filter, dateFrom: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">To Date</label>
+            <input
+              type="date"
+              className="form-input"
+              value={filter.dateTo}
+              onChange={e => setFilter({ ...filter, dateTo: e.target.value })}
+            />
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="btn btn-outline"
+            style={{ width: '100%' }}
+          >
+            🗑️ Clear All Filters
+          </button>
+        )}
       </div>
 
       {/* Transaction List */}
@@ -290,13 +437,22 @@ const Transactions = () => {
                   {transaction.type === 'income' ? '+' : '-'}
                   {formatCurrency(transaction.amount)}
                 </span>
-                <button
-                  onClick={() => handleDelete(transaction._id)}
-                  className="btn btn-danger"
-                  style={{ padding: '0.5rem 1rem' }}
-                >
-                  Delete
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => handleEdit(transaction)}
+                    className="btn btn-primary"
+                    style={{ padding: '0.5rem 1rem' }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(transaction._id)}
+                    className="btn btn-danger"
+                    style={{ padding: '0.5rem 1rem' }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))

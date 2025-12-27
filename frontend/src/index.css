@@ -22,7 +22,7 @@
   --primary: var(--primary-500);
   --primary-dark: var(--primary-700);
   --primary-light: var(--primary-400);
-  
+
   --secondary: #8b5cf6;
   --accent: #ec4899;
   --success: #10b981;
@@ -37,12 +37,12 @@
   --bg-elevated: #475569;
   --bg-glass: rgba(51, 65, 85, 0.4);
   --bg-glass-hover: rgba(51, 65, 85, 0.6);
-  
+
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
   --text-disabled: #64748b;
-  
+
   --border: rgba(148, 163, 184, 0.12);
   --border-hover: rgba(148, 163, 184, 0.24);
   --border-focus: rgba(99, 102, 241, 0.5);
@@ -113,19 +113,29 @@ body::before {
   width: 200%;
   height: 200%;
   background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-              radial-gradient(circle at 70% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+    radial-gradient(circle at 70% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
   animation: subtleRotate 60s linear infinite;
   z-index: -1;
   pointer-events: none;
 }
 
 @keyframes subtleRotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Enhanced Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: var(--spacing-lg);
@@ -432,16 +442,21 @@ select option {
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* LOADING SKELETON */
 .loading-skeleton {
   background: linear-gradient(90deg,
-    var(--bg-tertiary) 0%,
-    var(--bg-elevated) 50%,
-    var(--bg-tertiary) 100%);
+      var(--bg-tertiary) 0%,
+      var(--bg-elevated) 50%,
+      var(--bg-tertiary) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-md);
@@ -467,6 +482,10 @@ select option {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+.grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
 .flex-between {
   display: flex;
   justify-content: space-between;
@@ -485,6 +504,7 @@ select option {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -496,6 +516,7 @@ select option {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -533,12 +554,21 @@ select option {
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
-  h1 { font-size: 1.875rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.25rem; }
+  h1 {
+    font-size: 1.875rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
 
   .grid-2,
-  .grid-3 {
+  .grid-3,
+  .grid-4 {
     grid-template-columns: 1fr;
   }
 
@@ -557,6 +587,7 @@ select option {
 
 /* ACCESSIBILITY */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

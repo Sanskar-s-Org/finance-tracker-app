@@ -79,8 +79,8 @@ export const budgetService = {
 };
 
 export const dashboardService = {
-  getSummary: async () => {
-    const response = await api.get('/dashboard/summary');
+  getSummary: async (period = 'thisMonth') => {
+    const response = await api.get(`/dashboard/summary?period=${period}`);
     return response.data;
   },
 

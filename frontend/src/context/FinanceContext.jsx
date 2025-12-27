@@ -87,6 +87,12 @@ export const FinanceProvider = ({ children }) => {
     setTransactions(prev => prev.filter(t => t._id !== id));
   };
 
+  const updateBudget = async (id, budgetData) => {
+    const data = await budgetService.update(id, budgetData);
+    setBudgets(prev => prev.map(b => (b._id === id ? data.data : b)));
+    return data;
+  };
+
   const value = {
     transactions,
     categories,
@@ -100,6 +106,7 @@ export const FinanceProvider = ({ children }) => {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    updateBudget,
   };
 
   return (

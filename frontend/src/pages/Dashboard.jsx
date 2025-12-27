@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../context/AuthContext';
-import { dashboardService } from '../services';
+import { dashboardService, budgetService } from '../services';
 
 const Dashboard = () => {
   const { fetchDashboard } = useFinance();
@@ -9,24 +10,36 @@ const Dashboard = () => {
   const [summary, setSummary] = useState(null);
   const [trends, setTrends] = useState([]);
   const [insights, setInsights] = useState(null);
+  const [budgetAlerts, setBudgetAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [period, setPeriod] = useState('thisMonth');
+
+  const periodLabels = {
+    thisMonth: 'This Month',
+    lastMonth: 'Last Month',
+    last3Months: 'Last 3 Months',
+    thisYear: 'This Year',
+    allTime: 'All Time',
+  };
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [period]);
 
   const loadDashboard = async () => {
     try {
-      const [summaryRes, trendsRes, insightsRes] = await Promise.all([
-        dashboardService.getSummary(),
+      const [summaryRes, trendsRes, insightsRes, alertsRes] = await Promise.all([
+        dashboardService.getSummary(period),
         dashboardService.getTrends(6),
         dashboardService.getInsights(),
+        budgetService.getAlerts(),
       ]);
 
       setSummary(summaryRes.data);
       setTrends(trendsRes.data);
       setInsights(insightsRes.data);
+      setBudgetAlerts(alertsRes.data || []);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
@@ -63,6 +76,39 @@ const Dashboard = () => {
     }).format(amount);
   };
 
+  // Calculate quick stats
+  const income = summary?.summary?.income || 0;
+  const expense = summary?.summary?.expense || 0;
+  const savingsRate = income > 0 ? ((income - expense) / income * 100) : 0;
+
+  // Calculate days in period for avg daily spending
+  const getDaysInPeriod = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    switch (period) {
+      case 'lastMonth': {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        return new Date(lastMonthYear, lastMonth + 1, 0).getDate();
+      }
+      case 'last3Months':
+        return 90;
+      case 'thisYear':
+        const dayOfYear = Math.floor((today - new Date(currentYear, 0, 0)) / 1000 / 60 / 60 / 24);
+        return dayOfYear;
+      case 'allTime':
+        return summary?.summary?.transactionCount || 1;
+      case 'thisMonth':
+      default:
+        return today.getDate();
+    }
+  };
+
+  const avgDailySpending = expense / (getDaysInPeriod() || 1);
+  const topCategory = summary?.categoryBreakdown?.[0];
+
   return (
     <div
       className="container"
@@ -79,23 +125,43 @@ const Dashboard = () => {
         className="fade-in"
       >
         <div>
-          <h1 style={{ marginBottom: '0.5rem' }}>Dashboard</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
-            Welcome back! Here's your financial overview
+          <h1 style={{ marginBottom: '0.5rem' }}>Financial Dashboard</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
+            {periodLabels[period]} Overview
           </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          className="btn btn-outline"
-          disabled={refreshing}
-          style={{ minWidth: '120px' }}
-        >
-          {refreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="form-select"
+            style={{
+              minWidth: '160px',
+              padding: '0.625rem 1rem',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+            }}
+          >
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="last3Months">Last 3 Months</option>
+            <option value="thisYear">This Year</option>
+            <option value="allTime">All Time</option>
+          </select>
+          <button
+            onClick={handleRefresh}
+            className="btn btn-outline"
+            disabled={refreshing}
+            style={{ minWidth: '120px' }}
+          >
+            {refreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
+          </button>
+        </div>
       </div>
 
-      {/* Enhanced Summary Cards */}
+      {/* Main Stats - First Row */}
       <div className="grid grid-3" style={{ marginBottom: '2.5rem' }}>
+        {/* Income Card */}
         <div
           className="stat-card scale-in"
           style={{
@@ -135,7 +201,7 @@ const Dashboard = () => {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                {formatCurrency(summary?.summary?.income || 0)}
+                {formatCurrency(income)}
               </h2>
             </div>
             <div
@@ -161,10 +227,11 @@ const Dashboard = () => {
               fontWeight: '600',
             }}
           >
-            ↑ This month
+            ↑ {periodLabels[period]}
           </p>
         </div>
 
+        {/* Expense Card */}
         <div
           className="stat-card scale-in"
           style={{
@@ -205,7 +272,7 @@ const Dashboard = () => {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                {formatCurrency(summary?.summary?.expense || 0)}
+                {formatCurrency(expense)}
               </h2>
             </div>
             <div
@@ -231,10 +298,11 @@ const Dashboard = () => {
               fontWeight: '600',
             }}
           >
-            ↓ This month
+            ↓ {periodLabels[period]}
           </p>
         </div>
 
+        {/* Net Balance Card */}
         <div
           className="stat-card scale-in"
           style={{
@@ -299,10 +367,211 @@ const Dashboard = () => {
               fontWeight: '600',
             }}
           >
-            {summary?.summary?.transactionCount || 0} transactions
+            {income > expense ? '✓ Saving money' : expense > income ? '⚠ Deficit' : 'Breaking even'}
           </p>
         </div>
       </div>
+
+      {/* Second Row: Overview & Alerts */}
+      <div className="grid grid-2" style={{ marginBottom: '2.5rem' }}>
+        {/* Financial Overview Card */}
+        <div className="card" style={{ animationDelay: '0.3s' }}>
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>📈 Financial Overview</h3>
+
+          {/* Key Metrics */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Savings Rate</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '700', color: savingsRate >= 20 ? 'var(--success)' : savingsRate >= 0 ? 'var(--warning)' : 'var(--danger)' }}>
+                  {savingsRate.toFixed(1)}%
+                </span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                {savingsRate >= 20 ? 'Excellent! Keep it up' : savingsRate >= 0 ? 'Good, aim for 20%+' : 'Warning: Spending exceeds income'}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Daily Average</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+                  {formatCurrency(avgDailySpending)}
+                </span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                Your average spending per day
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Top Category</span>
+                <span style={{ fontSize: '1rem', fontWeight: '600' }}>
+                  {topCategory?.category?.icon} {topCategory?.category?.name || 'N/A'}
+                </span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                {topCategory ? `${formatCurrency(topCategory.total)} (${topCategory.percentage.toFixed(1)}%)` : 'No expenses yet'}
+              </p>
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Transactions</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+                  {summary?.summary?.transactionCount || 0}
+                </span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                Total activities this period
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--border)' }}>
+            <h4 style={{ fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '1rem' }}>Quick Actions</h4>
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              <Link
+                to="/transactions"
+                className="btn btn-primary"
+                style={{
+                  padding: '0.875rem 1.25rem',
+                  fontSize: '0.9375rem',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                }}
+              >
+                ➕ Add Transaction
+              </Link>
+              <Link
+                to="/budgets"
+                className="btn btn-outline"
+                style={{
+                  padding: '0.875rem 1.25rem',
+                  fontSize: '0.9375rem',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                }}
+              >
+                💰 Manage Budgets
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Budget Alerts Card */}
+        {budgetAlerts.length > 0 ? (
+          <div className="card" style={{ animationDelay: '0.35s' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>⚠️ Budget Alerts</h3>
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {budgetAlerts.map((alert, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '1rem',
+                    backgroundColor: alert.isOverBudget
+                      ? 'rgba(239, 68, 68, 0.1)'
+                      : 'rgba(251, 191, 36, 0.1)',
+                    borderLeft: `4px solid ${alert.isOverBudget ? 'var(--danger)' : 'var(--warning)'}`,
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>{alert.category?.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontWeight: '700', fontSize: '1rem' }}>
+                        {alert.category?.name}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {alert.isOverBudget ? 'Over budget!' : 'Approaching limit'}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Spent: {formatCurrency(alert.spent)}</span>
+                    <span>Budget: {formatCurrency(alert.amount)}</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${Math.min(alert.percentageUsed, 100)}%`,
+                        background: alert.isOverBudget ? 'var(--danger)' : 'var(--warning)',
+                      }}
+                    ></div>
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right', margin: 0 }}>
+                    {alert.percentageUsed}% used
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="card" style={{ animationDelay: '0.35s' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>💰 Budget Status</h3>
+            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✓</div>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>All budgets on track</p>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>No alerts at this time</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Budget Alerts */}
+      {budgetAlerts.length > 0 && (
+        <div style={{ marginBottom: '2.5rem' }} className="fade-in">
+          <h3 style={{ marginBottom: '1.5rem' }}>⚠️ Budget Alerts</h3>
+          <div className="grid grid-2">
+            {budgetAlerts.map((alert, index) => (
+              <div
+                key={index}
+                className="card scale-in"
+                style={{
+                  borderLeft: `4px solid ${alert.isOverBudget ? 'var(--danger)' : 'var(--warning)'}`,
+                  background: alert.isOverBudget
+                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%)'
+                    : 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, transparent 100%)',
+                  animationDelay: `${index * 0.05}s`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '2rem' }}>{alert.category?.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontWeight: '700', fontSize: '1.1rem' }}>
+                      {alert.category?.name}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                      {alert.isOverBudget ? 'Over budget!' : 'Approaching limit'}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                    <span>Spent: {formatCurrency(alert.spent)}</span>
+                    <span>Budget: {formatCurrency(alert.amount)}</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${Math.min(alert.percentageUsed, 100)}%`,
+                        background: alert.isOverBudget ? 'var(--danger)' : 'var(--warning)',
+                      }}
+                    ></div>
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right' }}>
+                    {alert.percentageUsed}% used
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Insights */}
       {insights && insights.insights?.length > 0 && (
@@ -314,13 +583,12 @@ const Dashboard = () => {
                 key={index}
                 className="card scale-in"
                 style={{
-                  borderLeft: `4px solid ${
-                    insight.type === 'success'
-                      ? 'var(--success)'
-                      : insight.type === 'warning'
-                        ? 'var(--warning)'
-                        : 'var(--info)'
-                  }`,
+                  borderLeft: `4px solid ${insight.type === 'success'
+                    ? 'var(--success)'
+                    : insight.type === 'warning'
+                      ? 'var(--warning)'
+                      : 'var(--info)'
+                    }`,
                   animationDelay: `${index * 0.1}s`,
                   background:
                     insight.type === 'success'
