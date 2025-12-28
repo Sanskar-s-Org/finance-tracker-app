@@ -86,56 +86,73 @@ pipeline {
                 stage('OWASP Dependency Check') {
                     steps {
                         script {
-                            try {
-                                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                                    // Write API key to properties file
-                                    sh '''
-                                        echo "nvdApiKey=${NVD_API_KEY}" > dependency-check.properties
-                                        echo "nvdApiDelay=8000" >> dependency-check.properties
-                                        echo "nvdValidForHours=24" >> dependency-check.properties
-                                    '''
-                                    
-                                    // Run dependency check
+                            withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+
+                                /* ---------------------------
+                                Dependency-Check properties
+                                --------------------------- */
+                                sh '''
+                                    echo "nvdApiKey=${NVD_API_KEY}" > dependency-check.properties
+                                    echo "nvdApiDelay=8000" >> dependency-check.properties
+                                    echo "nvdValidForHours=24" >> dependency-check.properties
+                                '''
+
+                                /* ---------------------------
+                                Backend scan
+                                --------------------------- */
+                                dir('backend') {
                                     dependencyCheck(
+                                        odcInstallation: 'OWASP-DepCheck-12',
                                         additionalArguments: '''
-                                            --scan ./
-                                            --out ./
+                                            --scan .
+                                            --out .
                                             --format ALL
                                             --prettyPrint
-                                            --propertyfile dependency-check.properties
-                                            --disableYarnAudit
-                                            --nodeAuditSkipDevDependencies
-                                            --nodePackageSkipDevDependencies
-                                        ''',
-                                        odcInstallation: 'OWASP-DepCheck-12'
-                                    )
-                                    
-                                    // Publish results
-                                    dependencyCheckPublisher(
-                                        failedTotalCritical: 1,
-                                        failedTotalHigh: 5,
-                                        unstableTotalCritical: 0,
-                                        unstableTotalHigh: 3,
-                                        pattern: 'dependency-check-report.xml',
-                                        stopBuild: false  // Don't stop, set to UNSTABLE
-                                    )
-                                    
-                                    // Archive reports
-                                    archiveArtifacts(
-                                        artifacts: 'dependency-check-report.*',
-                                        allowEmptyArchive: true
+                                            --propertyfile ../dependency-check.properties
+                                        '''
                                     )
                                 }
-                            } catch (Exception e) {
-                                echo "⚠️ OWASP Dependency Check failed: ${e.message}"
-                                currentBuild.result = 'UNSTABLE'
-                            } finally {
-                                // Always clean up
-                                sh 'rm -f dependency-check.properties'
+
+                                /* ---------------------------
+                                Frontend scan
+                                --------------------------- */
+                                dir('frontend') {
+                                    dependencyCheck(
+                                        odcInstallation: 'OWASP-DepCheck-12',
+                                        additionalArguments: '''
+                                            --scan .
+                                            --out .
+                                            --format ALL
+                                            --prettyPrint
+                                            --propertyfile ../dependency-check.properties
+                                        '''
+                                    )
+                                }
+
+                                /* ---------------------------
+                                Publish results to Jenkins
+                                --------------------------- */
+                                dependencyCheckPublisher(
+                                    pattern: '**/dependency-check-report.xml',
+                                    failedTotalCritical: 1,
+                                    failedTotalHigh: 5,
+                                    unstableTotalCritical: 0,
+                                    unstableTotalHigh: 3,
+                                    stopBuild: false
+                                )
+
+                                /* ---------------------------
+                                Archive reports
+                                --------------------------- */
+                                archiveArtifacts(
+                                    artifacts: '**/dependency-check-report.*',
+                                    allowEmptyArchive: true
+                                )
                             }
                         }
                     }
                 }
+
             }
         }
     }
