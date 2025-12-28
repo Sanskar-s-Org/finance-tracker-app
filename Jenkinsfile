@@ -14,18 +14,10 @@ pipeline {
             parallel {
 
                 stage('Backend Dependencies') {
-                    agent {
-                        node {
-                            label ''
-                            customWorkspace "${env.WORKSPACE}@backend"
-                        }
-                    }
                     steps {
-                        checkout scm
                         dir('backend') {
                             sh '''
                                 echo "📦 Installing backend dependencies..."
-                                npm config set cache .npm-cache --global
                                 npm ci --no-audit --no-fund
                             '''
                         }
@@ -33,18 +25,10 @@ pipeline {
                 }
 
                 stage('Frontend Dependencies') {
-                    agent {
-                        node {
-                            label ''
-                            customWorkspace "${env.WORKSPACE}@frontend"
-                        }
-                    }
                     steps {
-                        checkout scm
                         dir('frontend') {
                             sh '''
                                 echo "📦 Installing frontend dependencies..."
-                                npm config set cache .npm-cache --global
                                 npm ci --no-audit --no-fund
                             '''
                         }
