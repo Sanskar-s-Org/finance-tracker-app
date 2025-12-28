@@ -3,6 +3,7 @@ pipeline {
 
     options {
         timestamps()
+        timeout(time: 1, unit: 'HOURS')
     }
 
     tools {
@@ -10,32 +11,16 @@ pipeline {
     }
 
     stages {
-        stage('Build and Install Dependencies') {
-            parallel {
-
-                stage('Backend Dependencies') {
-                    steps {
-                        dir('backend') {
-                            sh '''
-                                echo "📦 Installing backend dependencies..."
-                                npm ci --no-audit --no-fund
-                            '''
-                        }
-                    }
-                }
-
-                stage('Frontend Dependencies') {
-                    steps {
-                        dir('frontend') {
-                            sh '''
-                                echo "📦 Installing frontend dependencies..."
-                                npm ci --no-audit --no-fund
-                            '''
-                        }
-                    }
+        
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    echo '📦 Installing dependencies from root (workspace mode)...'
+                    sh 'npm run install:all'
                 }
             }
         }
+
         stage('Security Checks') {
             parallel {
                 
@@ -45,8 +30,7 @@ pipeline {
                             dir('backend') {
                                 sh '''
                                     echo "🔍 Running npm audit on backend..."
-                                    npm audit --audit-level=critical --json > backend-audit.json || true
-                                    npm audit --audit-level=critical
+                                    npm audit --audit-level=critical || true
                                 '''
                             }
                         }
@@ -59,8 +43,7 @@ pipeline {
                             dir('frontend') {
                                 sh '''
                                     echo "🔍 Running npm audit on frontend..."
-                                    npm audit --audit-level=critical --json > frontend-audit.json || true
-                                    npm audit --audit-level=critical
+                                    npm audit --audit-level=critical || true
                                 '''
                             }
                         }
@@ -71,34 +54,26 @@ pipeline {
                     steps {
                         script {
                             withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-
-                                /* ---------------------------
-                                Dependency-Check properties
-                                --------------------------- */
                                 sh '''
                                     echo "nvdApiKey=${NVD_API_KEY}" > dependency-check.properties
                                     echo "nvdApiDelay=8000" >> dependency-check.properties
                                     echo "nvdValidForHours=24" >> dependency-check.properties
                                 '''
-
-                                /* ---------------------------
-                                Full workspace scan
-                                (package-lock.json is in root)
-                                --------------------------- */
+                                
                                 dependencyCheck(
                                     odcInstallation: 'OWASP-DepCheck-12',
                                     additionalArguments: '''
-                                        --scan .
+                                        --scan ./backend
+                                        --scan ./frontend
+                                        --scan ./node_modules
                                         --out .
                                         --format ALL
                                         --prettyPrint
                                         --propertyfile dependency-check.properties
+                                        --enableExperimental
                                     '''
                                 )
-
-                                /* ---------------------------
-                                Publish results to Jenkins
-                                --------------------------- */
+                                
                                 dependencyCheckPublisher(
                                     pattern: '**/dependency-check-report.xml',
                                     failedTotalCritical: 1,
@@ -107,29 +82,30 @@ pipeline {
                                     unstableTotalHigh: 3,
                                     stopBuild: false
                                 )
-
-                                /* ---------------------------
-                                Archive reports
-                                --------------------------- */
+                                
                                 archiveArtifacts(
-                                    artifacts: '**/dependency-check-report.*',
+                                    artifacts: 'dependency-check-report.*',
                                     allowEmptyArchive: true
                                 )
+                                
+                                sh 'rm -f dependency-check.properties'
                             }
                         }
                     }
                 }
-
             }
         }
     }
 
     post {
         success {
-            echo "✅ Dependency installation completed successfully"
+            echo '✅ Pipeline completed successfully!'
         }
         failure {
-            echo "❌ Dependency installation failed"
+            echo '❌ Pipeline failed'
+        }
+        always {
+            echo '📊 Security reports available in Jenkins artifacts'
         }
     }
 }
