@@ -1,36 +1,17 @@
+import { expect } from 'chai';
+import sinon from 'sinon';
 import errorHandler from '../../../middleware/errorHandler.js';
-
-// Mock response helper for ESM compatibility
-const createMockResponse = () => {
-    const calls = { status: [], json: [] };
-
-    return {
-        status(code) {
-            calls.status.push(code);
-            return this;
-        },
-        json(data) {
-            calls.json.push(data);
-            return this;
-        },
-        _calls: calls
-    };
-};
-
-const createMockNext = () => {
-    const calls = [];
-    const fn = (...args) => calls.push(args);
-    fn.calls = calls;
-    return fn;
-};
 
 describe('Error Handler Middleware', () => {
     let req, res, next;
 
     beforeEach(() => {
         req = {};
-        res = createMockResponse();
-        next = createMockNext();
+        res = {
+            status: sinon.stub().returnsThis(),
+            json: sinon.stub()
+        };
+        next = sinon.stub();
         process.env.NODE_ENV = 'test';
     });
 
@@ -39,9 +20,10 @@ describe('Error Handler Middleware', () => {
             const error = { name: 'CastError', message: 'Cast to ObjectId failed' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.status[0]).toBe(404);
-            expect(res._calls.json[0].success).toBe(false);
-            expect(res._calls.json[0].message).toBe('Resource not found');
+            expect(res.status.calledWith(404)).to.be.true;
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.success).to.be.false;
+            expect(jsonArg.message).to.equal('Resource not found');
         });
     });
 
@@ -50,16 +32,18 @@ describe('Error Handler Middleware', () => {
             const error = { code: 11000, keyValue: { email: 'test@example.com' }, message: 'Duplicate key error' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.status[0]).toBe(400);
-            expect(res._calls.json[0].success).toBe(false);
-            expect(res._calls.json[0].message).toBe('email already exists');
+            expect(res.status.calledWith(400)).to.be.true;
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.success).to.be.false;
+            expect(jsonArg.message).to.equal('email already exists');
         });
 
         it('should handle duplicate key with different field', () => {
             const error = { code: 11000, keyValue: { username: 'testuser' }, message: 'Duplicate key error' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.json[0].message).toBe('username already exists');
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.message).to.equal('username already exists');
         });
     });
 
@@ -75,9 +59,10 @@ describe('Error Handler Middleware', () => {
             };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.status[0]).toBe(400);
-            expect(res._calls.json[0].success).toBe(false);
-            expect(res._calls.json[0].message).toContain('Name is required');
+            expect(res.status.calledWith(400)).to.be.true;
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.success).to.be.false;
+            expect(jsonArg.message).to.include('Name is required');
         });
 
         it('should combine multiple validation errors', () => {
@@ -91,8 +76,9 @@ describe('Error Handler Middleware', () => {
             };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.json[0].message).toContain('Error 1');
-            expect(res._calls.json[0].message).toContain('Error 2');
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.message).to.include('Error 1');
+            expect(jsonArg.message).to.include('Error 2');
         });
     });
 
@@ -101,18 +87,20 @@ describe('Error Handler Middleware', () => {
             const error = { name: 'JsonWebTokenError', message: 'jwt malformed' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.status[0]).toBe(401);
-            expect(res._calls.json[0].success).toBe(false);
-            expect(res._calls.json[0].message).toBe('Invalid token');
+            expect(res.status.calledWith(401)).to.be.true;
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.success).to.be.false;
+            expect(jsonArg.message).to.equal('Invalid token');
         });
 
         it('should handle TokenExpiredError', () => {
             const error = { name: 'TokenExpiredError', message: 'jwt expired' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.status[0]).toBe(401);
-            expect(res._calls.json[0].success).toBe(false);
-            expect(res._calls.json[0].message).toBe('Token expired');
+            expect(res.status.calledWith(401)).to.be.true;
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.success).to.be.false;
+            expect(jsonArg.message).to.equal('Token expired');
         });
     });
 
@@ -121,23 +109,25 @@ describe('Error Handler Middleware', () => {
             const error = { message: 'Something went wrong' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.status[0]).toBe(500);
-            expect(res._calls.json[0].success).toBe(false);
-            expect(res._calls.json[0].message).toBe('Something went wrong');
+            expect(res.status.calledWith(500)).to.be.true;
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.success).to.be.false;
+            expect(jsonArg.message).to.equal('Something went wrong');
         });
 
         it('should use default message if no message provided', () => {
             const error = {};
             errorHandler(error, req, res, next);
 
-            expect(res._calls.json[0].message).toBe('Server Error');
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.message).to.equal('Server Error');
         });
 
         it('should use custom status code if provided', () => {
             const error = { message: 'Custom error', statusCode: 403 };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.status[0]).toBe(403);
+            expect(res.status.calledWith(403)).to.be.true;
         });
     });
 
@@ -147,7 +137,8 @@ describe('Error Handler Middleware', () => {
             const error = { message: 'Test error', stack: 'Error stack trace...' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.json[0].stack).toBeDefined();
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.stack).to.exist;
         });
 
         it('should not include stack trace in production', () => {
@@ -155,7 +146,8 @@ describe('Error Handler Middleware', () => {
             const error = { message: 'Test error', stack: 'Error stack trace...' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.json[0].stack).toBeUndefined();
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.stack).to.be.undefined;
         });
     });
 
@@ -164,14 +156,16 @@ describe('Error Handler Middleware', () => {
             const error = { message: 'Test error' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.json[0].success).toBe(false);
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.success).to.be.false;
         });
 
         it('should always include message', () => {
             const error = { message: 'Test error' };
             errorHandler(error, req, res, next);
 
-            expect(res._calls.json[0].message).toBeDefined();
+            const jsonArg = res.json.firstCall.args[0];
+            expect(jsonArg.message).to.exist;
         });
     });
 });

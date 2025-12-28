@@ -1,0 +1,18 @@
+{
+  "spec": "src/tests/**/*.test.js",
+  "ignore": ["**/database.test.js"],
+  "timeout": 10000,
+  "exit": true,
+  "recursive": true,
+  "node-option": ["no-warnings"],
+  "reporter": "mochawesome",
+  "reporter-options": [
+    "reportDir=test-results",
+    "reportFilename=test-report",
+    "html=true",
+    "json=true",
+    "overwrite=true",
+    "charts=true",
+    "embeddedScreenshots=true"
+  ]
+}

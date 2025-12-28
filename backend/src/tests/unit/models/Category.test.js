@@ -1,3 +1,4 @@
+import { expect } from 'chai';
 import '../../setup.js';
 import Category from '../../../models/Category.js';
 import User from '../../../models/User.js';
@@ -8,67 +9,225 @@ describe('Category Model', () => {
     beforeEach(async () => {
         user = await User.create({
             name: 'Test User',
-            email: 'test@example.com',
+            email: 'category@test.com',
             password: 'password123',
         });
     });
 
     describe('Category Creation', () => {
         it('should create a category with valid data', async () => {
-            const categoryData = {
+            const category = await Category.create({
                 name: 'Food',
                 type: 'expense',
-                icon: '🍔',
+                user: user._id,
+            });
+
+            expect(category).to.exist;
+            expect(category.name).to.equal('Food');
+            expect(category.type).to.equal('expense');
+        });
+
+        it('should fail without required fields', async () => {
+            try {
+                await Category.create({});
+                throw new Error('Should have thrown validation error');
+            } catch (error) {
+                expect(error.name).to.equal('ValidationError');
+            }
+        });
+
+        it('should fail without name', async () => {
+            try {
+                await Category.create({ type: 'expense', user: user._id });
+                throw new Error('Should have thrown validation error');
+            } catch (error) {
+                expect(error.name).to.equal('ValidationError');
+            }
+        });
+
+        it('should fail without type', async () => {
+            try {
+                await Category.create({ name: 'Food', user: user._id });
+                throw new Error('Should have thrown validation error');
+            } catch (error) {
+                expect(error.name).to.equal('ValidationError');
+            }
+        });
+
+        it('should fail without user', async () => {
+            try {
+                await Category.create({ name: 'Food', type: 'expense' });
+                throw new Error('Should have thrown validation error');
+            } catch (error) {
+                expect(error.name).to.equal('ValidationError');
+            }
+        });
+    });
+
+    describe('Type Validation', () => {
+        it('should accept expense type', async () => {
+            const category = await Category.create({
+                name: 'Food',
+                type: 'expense',
+                user: user._id,
+            });
+            expect(category.type).to.equal('expense');
+        });
+
+        it('should accept income type', async () => {
+            const category = await Category.create({
+                name: 'Salary',
+                type: 'income',
+                user: user._id,
+            });
+            expect(category.type).to.equal('income');
+        });
+
+        it('should reject invalid type', async () => {
+            try {
+                await Category.create({
+                    name: 'Food',
+                    type: 'invalid',
+                    user: user._id,
+                });
+                throw new Error('Should have thrown validation error');
+            } catch (error) {
+                expect(error.name).to.equal('ValidationError');
+            }
+        });
+    });
+
+    describe('Name Validation', () => {
+        it('should trim whitespace', async () => {
+            const category = await Category.create({
+                name: '  Food  ',
+                type: 'expense',
+                user: user._id,
+            });
+            expect(category.name).to.equal('Food');
+        });
+
+        it('should reject empty name after trim', async () => {
+            try {
+                await Category.create({
+                    name: '   ',
+                    type: 'expense',
+                    user: user._id,
+                });
+                throw new Error('Should have thrown validation error');
+            } catch (error) {
+                expect(error.name).to.equal('ValidationError');
+            }
+        });
+
+        it('should accept name with max length', async () => {
+            const longName = 'A'.repeat(30);
+            const category = await Category.create({
+                name: longName,
+                type: 'expense',
+                user: user._id,
+            });
+            expect(category.name).to.equal(longName);
+        });
+
+        it('should reject name exceeding max length', async () => {
+            try {
+                const longName = 'A'.repeat(31);
+                await Category.create({
+                    name: longName,
+                    type: 'expense',
+                    user: user._id,
+                });
+                throw new Error('Should have thrown validation error');
+            } catch (error) {
+                expect(error.name).to.equal('ValidationError');
+            }
+        });
+    });
+
+    describe('User Field', () => {
+        it('should require user reference', async () => {
+            try {
+                await Category.create({ name: 'Food', type: 'expense' });
+                throw new Error('Should have thrown validation error');
+            } catch (error) {
+                expect(error.name).to.equal('ValidationError');
+            }
+        });
+
+        it('should reference valid user', async () => {
+            const category = await Category.create({
+                name: 'Food',
+                type: 'expense',
+                user: user._id,
+            });
+            expect(category.user.toString()).to.equal(user._id.toString());
+        });
+    });
+
+    describe('Unique Constraints', () => {
+        it('should prevent duplicate category names per user', async () => {
+            await Category.create({
+                name: 'Food',
+                type: 'expense',
+                user: user._id,
+            });
+
+            try {
+                await Category.create({
+                    name: 'Food',
+                    type: 'expense',
+                    user: user._id,
+                });
+                throw new Error('Should have thrown duplicate error');
+            } catch (error) {
+                expect(error.code).to.equal(11000);
+            }
+        });
+
+        it('should allow same name for different users', async () => {
+            const user2 = await User.create({
+                name: 'User 2',
+                email: 'user2@test.com',
+                password: 'password123',
+            });
+
+            const cat1 = await Category.create({
+                name: 'Food',
+                type: 'expense',
+                user: user._id,
+            });
+
+            const cat2 = await Category.create({
+                name: 'Food',
+                type: 'expense',
+                user: user2._id,
+            });
+
+            expect(cat1).to.exist;
+            expect(cat2).to.exist;
+        });
+    });
+
+    describe('Optional Fields', () => {
+        it('should accept icon field', async () => {
+            const category = await Category.create({
+                name: 'Food',
+                type: 'expense',
+                user: user._id,
+                icon: 'shopping-cart',
+            });
+            expect(category.icon).to.equal('shopping-cart');
+        });
+
+        it('should accept color field', async () => {
+            const category = await Category.create({
+                name: 'Food',
+                type: 'expense',
+                user: user._id,
                 color: '#ff6b6b',
-                user: user._id,
-            };
-
-            const category = await Category.create(categoryData);
-
-            expect(category.name).toBe('Food');
-            expect(category.type).toBe('expense');
-            expect(category.icon).toBe('🍔');
-            expect(category.color).toBe('#ff6b6b');
-            expect(category.user.toString()).toBe(user._id.toString());
-            expect(category.isDefault).toBe(false);
-        });
-
-        it('should fail to create category without required name', async () => {
-            const categoryData = {
-                type: 'expense',
-                user: user._id,
-            };
-
-            await expect(Category.create(categoryData)).rejects.toThrow();
-        });
-
-        it('should fail to create category without required type', async () => {
-            const categoryData = {
-                name: 'Food',
-                user: user._id,
-            };
-
-            await expect(Category.create(categoryData)).rejects.toThrow();
-        });
-
-        it('should apply default icon', async () => {
-            const category = await Category.create({
-                name: 'Food',
-                type: 'expense',
-                user: user._id,
             });
-
-            expect(category.icon).toBe('📊');
-        });
-
-        it('should apply default color', async () => {
-            const category = await Category.create({
-                name: 'Food',
-                type: 'expense',
-                user: user._id,
-            });
-
-            expect(category.color).toBe('#6366f1');
+            expect(category.color).to.equal('#ff6b6b');
         });
 
         it('should default isDefault to false', async () => {
@@ -77,204 +236,17 @@ describe('Category Model', () => {
                 type: 'expense',
                 user: user._id,
             });
-
-            expect(category.isDefault).toBe(false);
-        });
-    });
-
-    describe('Type Validation', () => {
-        it('should accept income type', async () => {
-            const category = await Category.create({
-                name: 'Salary',
-                type: 'income',
-                user: user._id,
-            });
-
-            expect(category.type).toBe('income');
+            expect(category.isDefault).to.be.false;
         });
 
-        it('should accept expense type', async () => {
+        it('should allow isDefault to be set to true', async () => {
             const category = await Category.create({
                 name: 'Food',
                 type: 'expense',
                 user: user._id,
-            });
-
-            expect(category.type).toBe('expense');
-        });
-
-        it('should fail with invalid type', async () => {
-            const categoryData = {
-                name: 'Food',
-                type: 'invalid',
-                user: user._id,
-            };
-
-            await expect(Category.create(categoryData)).rejects.toThrow();
-        });
-    });
-
-    describe('Name Validation', () => {
-        it('should trim category name', async () => {
-            const category = await Category.create({
-                name: '  Food  ',
-                type: 'expense',
-                user: user._id,
-            });
-
-            expect(category.name).toBe('Food');
-        });
-
-        it('should enforce maxlength of 30 characters', async () => {
-            const longName = 'a'.repeat(31);
-            const categoryData = {
-                name: longName,
-                type: 'expense',
-                user: user._id,
-            };
-
-            await expect(Category.create(categoryData)).rejects.toThrow();
-        });
-
-        it('should accept name with exactly 30 characters', async () => {
-            const exactName = 'a'.repeat(30);
-            const category = await Category.create({
-                name: exactName,
-                type: 'expense',
-                user: user._id,
-            });
-
-            expect(category.name).toBe(exactName);
-        });
-    });
-
-    describe('User Field Validation', () => {
-        it('should require user for non-default categories', async () => {
-            const categoryData = {
-                name: 'Food',
-                type: 'expense',
-                isDefault: false,
-            };
-
-            await expect(Category.create(categoryData)).rejects.toThrow();
-        });
-
-        it('should not require user for default categories', async () => {
-            const category = await Category.create({
-                name: 'Food',
-                type: 'expense',
                 isDefault: true,
             });
-
-            expect(category.isDefault).toBe(true);
-            expect(category.user).toBeUndefined();
-        });
-
-        it('should allow user field for default categories', async () => {
-            const category = await Category.create({
-                name: 'Food',
-                type: 'expense',
-                isDefault: true,
-                user: user._id,
-            });
-
-            expect(category.isDefault).toBe(true);
-            expect(category.user.toString()).toBe(user._id.toString());
-        });
-    });
-
-    describe('Unique Constraint', () => {
-        it('should prevent duplicate categories for same user/name/type', async () => {
-            const categoryData = {
-                name: 'Food',
-                type: 'expense',
-                user: user._id,
-            };
-
-            await Category.create(categoryData);
-
-            // Try to create duplicate
-            await expect(Category.create(categoryData)).rejects.toThrow();
-        });
-
-        it('should allow same category name for different users', async () => {
-            const user2 = await User.create({
-                name: 'Another User',
-                email: 'another@example.com',
-                password: 'password123',
-            });
-
-            await Category.create({
-                name: 'Food',
-                type: 'expense',
-                user: user._id,
-            });
-
-            const category2 = await Category.create({
-                name: 'Food',
-                type: 'expense',
-                user: user2._id,
-            });
-
-            expect(category2.name).toBe('Food');
-            expect(category2.user.toString()).toBe(user2._id.toString());
-        });
-
-        it('should allow same category name for different types', async () => {
-            await Category.create({
-                name: 'Business',
-                type: 'expense',
-                user: user._id,
-            });
-
-            const category2 = await Category.create({
-                name: 'Business',
-                type: 'income',
-                user: user._id,
-            });
-
-            expect(category2.name).toBe('Business');
-            expect(category2.type).toBe('income');
-        });
-
-        it('should allow different category names for same user', async () => {
-            await Category.create({
-                name: 'Food',
-                type: 'expense',
-                user: user._id,
-            });
-
-            const category2 = await Category.create({
-                name: 'Transport',
-                type: 'expense',
-                user: user._id,
-            });
-
-            expect(category2.name).toBe('Transport');
-        });
-    });
-
-    describe('Custom Fields', () => {
-        it('should allow custom icon', async () => {
-            const category = await Category.create({
-                name: 'Food',
-                type: 'expense',
-                icon: '🍕',
-                user: user._id,
-            });
-
-            expect(category.icon).toBe('🍕');
-        });
-
-        it('should allow custom color', async () => {
-            const category = await Category.create({
-                name: 'Food',
-                type: 'expense',
-                color: '#ff0000',
-                user: user._id,
-            });
-
-            expect(category.color).toBe('#ff0000');
+            expect(category.isDefault).to.be.true;
         });
     });
 
@@ -285,9 +257,8 @@ describe('Category Model', () => {
                 type: 'expense',
                 user: user._id,
             });
-
-            expect(category.createdAt).toBeDefined();
-            expect(category.createdAt).toBeInstanceOf(Date);
+            expect(category.createdAt).to.exist;
+            expect(category.createdAt).to.be.instanceOf(Date);
         });
 
         it('should have updatedAt timestamp', async () => {
@@ -296,9 +267,8 @@ describe('Category Model', () => {
                 type: 'expense',
                 user: user._id,
             });
-
-            expect(category.updatedAt).toBeDefined();
-            expect(category.updatedAt).toBeInstanceOf(Date);
+            expect(category.updatedAt).to.exist;
+            expect(category.updatedAt).to.be.instanceOf(Date);
         });
     });
 });

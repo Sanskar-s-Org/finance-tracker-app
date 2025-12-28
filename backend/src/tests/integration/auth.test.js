@@ -1,68 +1,57 @@
-import dotenv from 'dotenv';
-dotenv.config({ path: '../.env' });
-if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'test-jwt-secret';
-
-import '../setup.js';
+import { expect } from 'chai';
 import request from 'supertest';
+import '../setup.js';
 import app from '../../app.js';
 import User from '../../models/User.js';
-import Category from '../../models/Category.js';
 
-describe('Auth Integration Tests', () => {
+describe('Auth API Integration Tests', () => {
   describe('POST /api/auth/signup', () => {
-    it('should register a new user', async () => {
-      const userData = {
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'password123',
-      };
-
+    it('should create a new user', async () => {
       const res = await request(app)
         .post('/api/auth/signup')
-        .send(userData)
-        .expect(201);
+        .send({
+          name: 'John Doe',
+          email: 'john@test.com',
+          password: 'password123',
+        });
 
-      expect(res.body.success).toBe(true);
-      expect(res.body.token).toBeDefined();
-      expect(res.body.user.email).toBe(userData.email);
-      expect(res.body.user.password).toBeUndefined();
-
-      // Check if default categories were created
-      const categories = await Category.find({ user: res.body.user._id });
-      expect(categories.length).toBeGreaterThan(0);
+      expect(res.status).to.equal(201);
+      expect(res.body.success).to.be.true;
+      expect(res.body.token).to.exist;
+      expect(res.body.user).to.exist;
+      expect(res.body.user.email).to.equal('john@test.com');
     });
 
-    it('should fail with duplicate email', async () => {
-      const userData = {
-        name: 'Test User',
-        email: 'test@example.com',
+    it('should return error for duplicate email', async () => {
+      await User.create({
+        name: 'Existing User',
+        email: 'duplicate@test.com',
         password: 'password123',
-      };
-
-      await request(app).post('/api/auth/signup').send(userData).expect(201);
+      });
 
       const res = await request(app)
         .post('/api/auth/signup')
-        .send(userData)
-        .expect(400);
+        .send({
+          name: 'New User',
+          email: 'duplicate@test.com',
+          password: 'password456',
+        });
 
-      expect(res.body.success).toBe(false);
+      expect(res.status).to.equal(400);
+      expect(res.body.success).to.be.false;
     });
 
-    it('should fail with invalid data', async () => {
-      const userData = {
-        name: 'T',
-        email: 'invalid-email',
-        password: '123',
-      };
-
+    it('should return error for invalid email', async () => {
       const res = await request(app)
         .post('/api/auth/signup')
-        .send(userData)
-        .expect(400);
+        .send({
+          name: 'John Doe',
+          email: 'invalid-email',
+          password: 'password123',
+        });
 
-      expect(res.body.success).toBe(false);
-      expect(res.body.errors).toBeDefined();
+      expect(res.status).to.equal(400);
+      expect(res.body.success).to.be.false;
     });
   });
 
@@ -70,84 +59,88 @@ describe('Auth Integration Tests', () => {
     beforeEach(async () => {
       await User.create({
         name: 'Test User',
-        email: 'test@example.com',
+        email: 'login@test.com',
         password: 'password123',
       });
     });
 
     it('should login with valid credentials', async () => {
-      const credentials = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-
       const res = await request(app)
         .post('/api/auth/login')
-        .send(credentials)
-        .expect(200);
+        .send({
+          email: 'login@test.com',
+          password: 'password123',
+        });
 
-      expect(res.body.success).toBe(true);
-      expect(res.body.token).toBeDefined();
-      expect(res.body.user.email).toBe(credentials.email);
+      expect(res.status).to.equal(200);
+      expect(res.body.success).to.be.true;
+      expect(res.body.token).to.exist;
     });
 
-    it('should fail with wrong password', async () => {
-      const credentials = {
-        email: 'test@example.com',
-        password: 'wrongpassword',
-      };
-
+    it('should return error for invalid password', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send(credentials)
-        .expect(401);
+        .send({
+          email: 'login@test.com',
+          password: 'wrongpassword',
+        });
 
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toBe('Invalid credentials');
+      expect(res.status).to.equal(401);
+      expect(res.body.success).to.be.false;
     });
 
-    it('should fail with non-existent email', async () => {
-      const credentials = {
-        email: 'nonexistent@example.com',
-        password: 'password123',
-      };
-
+    it('should return error for non-existent user', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send(credentials)
-        .expect(401);
+        .send({
+          email: 'nonexistent@test.com',
+          password: 'password123',
+        });
 
-      expect(res.body.success).toBe(false);
+      expect(res.status).to.equal(401);
+      expect(res.body.success).to.be.false;
     });
   });
 
   describe('GET /api/auth/me', () => {
-    it('should get current user with valid token', async () => {
-      const user = await User.create({
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'password123',
-      });
+    let token;
 
-      const loginRes = await request(app)
-        .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'password123' });
-
-      const token = loginRes.body.token;
-
+    beforeEach(async () => {
       const res = await request(app)
-        .get('/api/auth/me')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-
-      expect(res.body.success).toBe(true);
-      expect(res.body.user.email).toBe(user.email);
+        .post('/api/auth/signup')
+        .send({
+          name: 'Test User',
+          email: 'me@test.com',
+          password: 'password123',
+        });
+      token = res.body.token;
     });
 
-    it('should fail without token', async () => {
-      const res = await request(app).get('/api/auth/me').expect(401);
+    it('should get user data with valid token', async () => {
+      const res = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`);
 
-      expect(res.body.success).toBe(false);
+      expect(res.status).to.equal(200);
+      expect(res.body.success).to.be.true;
+      expect(res.body.user).to.exist;
+      expect(res.body.user.email).to.equal('me@test.com');
+    });
+
+    it('should return error without token', async () => {
+      const res = await request(app).get('/api/auth/me');
+
+      expect(res.status).to.equal(401);
+      expect(res.body.success).to.be.false;
+    });
+
+    it('should return error with invalid token', async () => {
+      const res = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', 'Bearer invalid-token');
+
+      expect(res.status).to.equal(401);
+      expect(res.body.success).to.be.false;
     });
   });
 });

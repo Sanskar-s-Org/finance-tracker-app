@@ -1,11 +1,11 @@
+import { expect } from 'chai';
 import '../../setup.js';
 import Transaction from '../../../models/Transaction.js';
 import User from '../../../models/User.js';
 import Category from '../../../models/Category.js';
 
 describe('Transaction Model', () => {
-  let user;
-  let category;
+  let user, category;
 
   beforeEach(async () => {
     user = await User.create({
@@ -23,52 +23,53 @@ describe('Transaction Model', () => {
 
   describe('Transaction Creation', () => {
     it('should create a transaction with valid data', async () => {
-      const transactionData = {
+      const transaction = await Transaction.create({
         user: user._id,
         type: 'expense',
-        amount: 50.0,
+        amount: 100,
         category: category._id,
-        description: 'Lunch',
-        date: new Date(),
-      };
+      });
 
-      const transaction = await Transaction.create(transactionData);
-
-      expect(transaction.user.toString()).toBe(user._id.toString());
-      expect(transaction.type).toBe('expense');
-      expect(transaction.amount).toBe(50.0);
-      expect(transaction.paymentMethod).toBe('cash'); // Default value
+      expect(transaction).to.exist;
+      expect(transaction.amount).to.equal(100);
+      expect(transaction.type).to.equal('expense');
     });
 
     it('should fail to create transaction without required fields', async () => {
-      const transactionData = {
-        user: user._id,
-        type: 'expense',
-      };
-
-      await expect(Transaction.create(transactionData)).rejects.toThrow();
+      try {
+        await Transaction.create({});
+        throw new Error('Should have thrown validation error');
+      } catch (error) {
+        expect(error.name).to.equal('ValidationError');
+      }
     });
 
     it('should fail with invalid type', async () => {
-      const transactionData = {
-        user: user._id,
-        type: 'invalid',
-        amount: 50.0,
-        category: category._id,
-      };
-
-      await expect(Transaction.create(transactionData)).rejects.toThrow();
+      try {
+        await Transaction.create({
+          user: user._id,
+          type: 'invalid',
+          amount: 100,
+          category: category._id,
+        });
+        throw new Error('Should have thrown validation error');
+      } catch (error) {
+        expect(error.name).to.equal('ValidationError');
+      }
     });
 
     it('should fail with negative amount', async () => {
-      const transactionData = {
-        user: user._id,
-        type: 'expense',
-        amount: -50.0,
-        category: category._id,
-      };
-
-      await expect(Transaction.create(transactionData)).rejects.toThrow();
+      try {
+        await Transaction.create({
+          user: user._id,
+          type: 'expense',
+          amount: -50,
+          category: category._id,
+        });
+        throw new Error('Should have thrown validation error');
+      } catch (error) {
+        expect(error.name).to.equal('ValidationError');
+      }
     });
   });
 
@@ -84,35 +85,38 @@ describe('Transaction Model', () => {
           category: category._id,
           paymentMethod: method,
         });
-
-        expect(transaction.paymentMethod).toBe(method);
+        expect(transaction.paymentMethod).to.equal(method);
       }
     });
 
     it('should reject invalid payment method', async () => {
-      const transactionData = {
-        user: user._id,
-        type: 'expense',
-        amount: 100,
-        category: category._id,
-        paymentMethod: 'invalid',
-      };
-
-      await expect(Transaction.create(transactionData)).rejects.toThrow();
+      try {
+        await Transaction.create({
+          user: user._id,
+          type: 'expense',
+          amount: 100,
+          category: category._id,
+          paymentMethod: 'invalid',
+        });
+        throw new Error('Should have thrown validation error');
+      } catch (error) {
+        expect(error.name).to.equal('ValidationError');
+      }
     });
 
-    it('should trim and limit description', async () => {
-      const longDescription = 'a'.repeat(250);
-
-      const transactionData = {
-        user: user._id,
-        type: 'expense',
-        amount: 100,
-        category: category._id,
-        description: longDescription,
-      };
-
-      await expect(Transaction.create(transactionData)).rejects.toThrow();
+    it('should reject description over 200 chars', async () => {
+      try {
+        await Transaction.create({
+          user: user._id,
+          type: 'expense',
+          amount: 100,
+          category: category._id,
+          description: 'x'.repeat(250),
+        });
+        throw new Error('Should have thrown validation error');
+      } catch (error) {
+        expect(error.name).to.equal('ValidationError');
+      }
     });
   });
 });

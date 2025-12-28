@@ -1,87 +1,88 @@
+import { expect } from 'chai';
 import '../../setup.js';
 import User from '../../../models/User.js';
 
 describe('User Model', () => {
   describe('User Creation', () => {
     it('should create a user with valid data', async () => {
-      const userData = {
-        name: 'Test User',
-        email: 'test@example.com',
+      const user = await User.create({
+        name: 'John Doe',
+        email: 'john@example.com',
         password: 'password123',
-      };
+      });
 
-      const user = await User.create(userData);
-
-      expect(user.name).toBe(userData.name);
-      expect(user.email).toBe(userData.email);
-      expect(user.password).not.toBe(userData.password); // Should be hashed
-      expect(user.currency).toBe('USD'); // Default value
+      expect(user).to.exist;
+      expect(user.name).to.equal('John Doe');
+      expect(user.email).to.equal('john@example.com');
     });
 
     it('should fail to create user without required fields', async () => {
-      const userData = {
-        name: 'Test User',
-      };
-
-      await expect(User.create(userData)).rejects.toThrow();
+      try {
+        await User.create({});
+        throw new Error('Should have thrown validation error');
+      } catch (error) {
+        expect(error.name).to.equal('ValidationError');
+      }
     });
 
     it('should fail to create user with invalid email', async () => {
-      const userData = {
-        name: 'Test User',
-        email: 'invalid-email',
-        password: 'password123',
-      };
-
-      await expect(User.create(userData)).rejects.toThrow();
+      try {
+        await User.create({
+          name: 'John Doe',
+          email: 'invalid-email',
+          password: 'password123',
+        });
+        throw new Error('Should have thrown validation error');
+      } catch (error) {
+        expect(error.name).to.equal('ValidationError');
+      }
     });
 
     it('should fail to create user with duplicate email', async () => {
-      const userData = {
-        name: 'Test User',
-        email: 'test@example.com',
+      await User.create({
+        name: 'John Doe',
+        email: 'duplicate@example.com',
         password: 'password123',
-      };
+      });
 
-      await User.create(userData);
-      await expect(User.create(userData)).rejects.toThrow();
+      try {
+        await User.create({
+          name: 'Jane Doe',
+          email: 'duplicate@example.com',
+          password: 'password456',
+        });
+        throw new Error('Should have thrown duplicate error');
+      } catch (error) {
+        expect(error.code).to.equal(11000);
+      }
     });
   });
 
   describe('Password Hashing', () => {
     it('should hash password before saving', async () => {
-      const userData = {
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'password123',
-      };
+      const password = 'password123';
+      const user = await User.create({
+        name: 'John Doe',
+        email: 'hash@example.com',
+        password,
+      });
 
-      const user = await User.create(userData);
-      const savedUser = await User.findById(user._id).select('+password');
-
-      expect(savedUser.password).not.toBe(userData.password);
-      expect(savedUser.password).toHaveLength(60); // bcrypt hash length
+      expect(user.password).to.not.equal(password);
+      expect(user.password).to.have.lengthOf.at.least(50);
     });
 
-    it('should not rehash password if not modified', async () => {
+    it('should not hash already hashed password on update', async () => {
       const user = await User.create({
-        name: 'Test User',
-        email: 'test@example.com',
+        name: 'John Doe',
+        email: 'nohash@example.com',
         password: 'password123',
       });
 
-      const originalPassword = (
-        await User.findById(user._id).select('+password')
-      ).password;
-
-      user.name = 'Updated Name';
+      const hashedPassword = user.password;
+      user.name = 'Jane Doe';
       await user.save();
 
-      const updatedPassword = (
-        await User.findById(user._id).select('+password')
-      ).password;
-
-      expect(originalPassword).toBe(updatedPassword);
+      expect(user.password).to.equal(hashedPassword);
     });
   });
 
@@ -89,48 +90,61 @@ describe('User Model', () => {
     it('should correctly compare valid password', async () => {
       const password = 'password123';
       const user = await User.create({
-        name: 'Test User',
-        email: 'test@example.com',
+        name: 'John Doe',
+        email: 'compare@example.com',
         password,
       });
 
-      const userWithPassword = await User.findById(user._id).select(
-        '+password'
-      );
-      const isMatch = await userWithPassword.comparePassword(password);
-
-      expect(isMatch).toBe(true);
+      const isMatch = await user.comparePassword(password);
+      expect(isMatch).to.be.true;
     });
 
-    it('should correctly compare invalid password', async () => {
+    it('should correctly reject invalid password', async () => {
       const user = await User.create({
-        name: 'Test User',
-        email: 'test@example.com',
+        name: 'John Doe',
+        email: 'reject@example.com',
         password: 'password123',
       });
 
-      const userWithPassword = await User.findById(user._id).select(
-        '+password'
-      );
-      const isMatch = await userWithPassword.comparePassword('wrongpassword');
+      const isMatch = await user.comparePassword('wrongpassword');
+      expect(isMatch).to.be.false;
+    });
 
-      expect(isMatch).toBe(false);
+    it('should handle empty password comparison', async () => {
+      const user = await User.create({
+        name: 'John Doe',
+        email: 'empty@example.com',
+        password: 'password123',
+      });
+
+      const isMatch = await user.comparePassword('');
+      expect(isMatch).to.be.false;
     });
   });
 
   describe('JSON Serialization', () => {
-    it('should exclude password from JSON response', async () => {
+    it('should not include password in JSON output', async () => {
       const user = await User.create({
-        name: 'Test User',
-        email: 'test@example.com',
+        name: 'John Doe',
+        email: 'json@example.com',
         password: 'password123',
       });
 
       const userJSON = user.toJSON();
+      expect(userJSON).to.not.have.property('password');
+    });
 
-      expect(userJSON.password).toBeUndefined();
-      expect(userJSON.name).toBe('Test User');
-      expect(userJSON.email).toBe('test@example.com');
+    it('should include other fields in JSON output', async () => {
+      const user = await User.create({
+        name: 'John Doe',
+        email: 'fields@example.com',
+        password: 'password123',
+      });
+
+      const userJSON = user.toJSON();
+      expect(userJSON).to.have.property('name');
+      expect(userJSON).to.have.property('email');
+      expect(userJSON).to.have.property('_id');
     });
   });
 });

@@ -13,7 +13,9 @@ if (!process.env.JWT_SECRET) {
 let mongoServer;
 
 // Connect to in-memory database before all tests
-beforeAll(async () => {
+before(async function () {
+  this.timeout(60000); // 60 second timeout for MongoDB setup
+
   try {
     mongoServer = await MongoMemoryServer.create({
       instance: {
@@ -28,10 +30,10 @@ beforeAll(async () => {
     console.error('MongoDB setup error:', error);
     throw error;
   }
-}, 60000); // 60 second timeout
+});
 
 // Clear database after each test
-afterEach(async () => {
+afterEach(async function () {
   if (mongoose.connection.readyState === 1) {
     const collections = mongoose.connection.collections;
     for (const key in collections) {
@@ -41,7 +43,7 @@ afterEach(async () => {
 });
 
 // Disconnect and stop database after all tests
-afterAll(async () => {
+after(async function () {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
