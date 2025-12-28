@@ -82,36 +82,19 @@ pipeline {
                                 '''
 
                                 /* ---------------------------
-                                Backend scan
+                                Full workspace scan
+                                (package-lock.json is in root)
                                 --------------------------- */
-                                dir('backend') {
-                                    dependencyCheck(
-                                        odcInstallation: 'OWASP-DepCheck-12',
-                                        additionalArguments: '''
-                                            --scan .
-                                            --out .
-                                            --format ALL
-                                            --prettyPrint
-                                            --propertyfile ../dependency-check.properties
-                                        '''
-                                    )
-                                }
-
-                                /* ---------------------------
-                                Frontend scan
-                                --------------------------- */
-                                dir('frontend') {
-                                    dependencyCheck(
-                                        odcInstallation: 'OWASP-DepCheck-12',
-                                        additionalArguments: '''
-                                            --scan .
-                                            --out .
-                                            --format ALL
-                                            --prettyPrint
-                                            --propertyfile ../dependency-check.properties
-                                        '''
-                                    )
-                                }
+                                dependencyCheck(
+                                    odcInstallation: 'OWASP-DepCheck-12',
+                                    additionalArguments: '''
+                                        --scan .
+                                        --out .
+                                        --format ALL
+                                        --prettyPrint
+                                        --propertyfile dependency-check.properties
+                                    '''
+                                )
 
                                 /* ---------------------------
                                 Publish results to Jenkins
