@@ -16,7 +16,7 @@ pipeline {
                 stage('Backend Dependencies') {
                     agent {
                         node {
-                            label 'any'
+                            label ''
                             customWorkspace "${env.WORKSPACE}@backend"
                         }
                     }
@@ -35,7 +35,7 @@ pipeline {
                 stage('Frontend Dependencies') {
                     agent {
                         node {
-                            label 'any'
+                            label ''
                             customWorkspace "${env.WORKSPACE}@frontend"
                         }
                     }
