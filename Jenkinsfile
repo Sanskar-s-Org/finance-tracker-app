@@ -97,15 +97,6 @@ pipeline {
                                     echo "nvdValidForHours=24" >> dependency-check.properties
                                 '''
 
-                                  // Ensure dependencies are in place
-                                sh '''
-                                    if [ ! -d "backend/node_modules" ]; then
-                                        cd backend && npm ci --no-audit
-                                    fi
-                                    if [ ! -d "frontend/node_modules" ]; then
-                                        cd frontend && npm ci --no-audit
-                                    fi
-                                '''
                                 /* ---------------------------
                                 Backend scan
                                 --------------------------- */
