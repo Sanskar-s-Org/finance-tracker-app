@@ -14,21 +14,38 @@ let mongoServer;
 
 // Connect to in-memory database before all tests
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const mongoUri = mongoServer.getUri();
-  await mongoose.connect(mongoUri);
-});
+  try {
+    mongoServer = await MongoMemoryServer.create({
+      instance: {
+        port: null, // Auto-select available port
+        ip: '127.0.0.1', // Use localhost
+        storageEngine: 'wiredTiger',
+      },
+    });
+    const mongoUri = mongoServer.getUri();
+    await mongoose.connect(mongoUri);
+  } catch (error) {
+    console.error('MongoDB setup error:', error);
+    throw error;
+  }
+}, 60000); // 60 second timeout
 
 // Clear database after each test
 afterEach(async () => {
-  const collections = mongoose.connection.collections;
-  for (const key in collections) {
-    await collections[key].deleteMany();
+  if (mongoose.connection.readyState === 1) {
+    const collections = mongoose.connection.collections;
+    for (const key in collections) {
+      await collections[key].deleteMany();
+    }
   }
 });
 
 // Disconnect and stop database after all tests
 afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 });

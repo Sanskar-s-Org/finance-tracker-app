@@ -53,14 +53,15 @@
   },
   "jest": {
     "preset": "@shelf/jest-mongodb",
-    "testEnvironment": "node",
     "transform": {},
-    "coveragePathIgnorePatterns": [
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "testPathIgnorePatterns": [
       "/node_modules/",
-      "/tests/"
+      "database.test.js"
     ],
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ]
+    "setupFilesAfterEnv": ["<rootDir>/src/tests/setup.js"]
   }
 }
