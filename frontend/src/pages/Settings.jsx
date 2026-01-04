@@ -143,10 +143,10 @@ const Settings = () => {
     ];
 
     return (
-        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '3rem' }}>
-            <div style={{ marginBottom: '2.5rem' }} className="fade-in">
-                <h1 style={{ marginBottom: '0.5rem' }}>⚙️ Settings</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+        <div className="container" style={{ paddingTop: '1.25rem', paddingBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.5rem' }} className="fade-in">
+                <h1 style={{ marginBottom: '0.375rem', fontSize: '1.75rem' }}>⚙️ Settings</h1>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
                     Manage your account settings and preferences
                 </p>
             </div>
@@ -155,8 +155,8 @@ const Settings = () => {
             <div
                 style={{
                     display: 'flex',
-                    gap: '1rem',
-                    marginBottom: '2rem',
+                    gap: '0.75rem',
+                    marginBottom: '1.5rem',
                     borderBottom: '1px solid var(--border)',
                     flexWrap: 'wrap',
                 }}
@@ -166,14 +166,14 @@ const Settings = () => {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         style={{
-                            padding: '0.75rem 1.5rem',
+                            padding: '0.625rem 1.25rem',
                             background: activeTab === tab.id ? 'var(--bg-secondary)' : 'transparent',
                             border: 'none',
                             borderBottom:
                                 activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
                             color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
                             cursor: 'pointer',
-                            fontSize: '1rem',
+                            fontSize: '0.9375rem',
                             fontWeight: activeTab === tab.id ? '600' : '400',
                             transition: 'var(--transition-base)',
                         }}
@@ -185,8 +185,8 @@ const Settings = () => {
 
             {/* Profile Tab */}
             {activeTab === 'profile' && (
-                <div className="card fade-in">
-                    <h3 style={{ marginBottom: '1.5rem' }}>Profile Information</h3>
+                <div className="card fade-in" style={{ padding: '1.25rem' }}>
+                    <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Profile Information</h3>
                     <form onSubmit={handleProfileUpdate}>
                         <div className="form-group">
                             <label>Name</label>
@@ -232,8 +232,8 @@ const Settings = () => {
 
             {/* Password Tab */}
             {activeTab === 'password' && (
-                <div className="card fade-in">
-                    <h3 style={{ marginBottom: '1.5rem' }}>Change Password</h3>
+                <div className="card fade-in" style={{ padding: '1.25rem' }}>
+                    <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Change Password</h3>
                     <form onSubmit={handlePasswordUpdate}>
                         <div className="form-group">
                             <label>Current Password</label>
@@ -280,11 +280,11 @@ const Settings = () => {
 
             {/* Preferences Tab */}
             {activeTab === 'preferences' && (
-                <div className="card fade-in">
-                    <h3 style={{ marginBottom: '1.5rem' }}>Preferences</h3>
+                <div className="card fade-in" style={{ padding: '1.25rem' }}>
+                    <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Preferences</h3>
                     <form onSubmit={handlePreferencesUpdate}>
-                        <div style={{ marginBottom: '2rem' }}>
-                            <h4 style={{ marginBottom: '1rem' }}>Notifications</h4>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <h4 style={{ marginBottom: '0.75rem', fontSize: '1.0625rem' }}>Notifications</h4>
                             <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <input
                                     type="checkbox"
@@ -327,8 +327,8 @@ const Settings = () => {
                             </div>
                         </div>
 
-                        <div style={{ marginBottom: '2rem' }}>
-                            <h4 style={{ marginBottom: '1rem' }}>Appearance</h4>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <h4 style={{ marginBottom: '0.75rem', fontSize: '1.0625rem' }}>Appearance</h4>
                             <div className="form-group">
                                 <label>Theme</label>
                                 <select
@@ -351,18 +351,18 @@ const Settings = () => {
 
             {/* Danger Zone Tab */}
             {activeTab === 'danger' && (
-                <div className="card fade-in" style={{ borderColor: 'var(--danger)' }}>
-                    <h3 style={{ marginBottom: '1.5rem', color: 'var(--danger)' }}>⚠️ Danger Zone</h3>
+                <div className="card fade-in" style={{ borderColor: 'var(--danger)', padding: '1.25rem' }}>
+                    <h3 style={{ marginBottom: '1rem', color: 'var(--danger)', fontSize: '1.125rem' }}>⚠️ Danger Zone</h3>
                     <div
                         style={{
-                            padding: '1.5rem',
+                            padding: '1.25rem',
                             background: 'rgba(239, 68, 68, 0.1)',
                             borderRadius: 'var(--radius-md)',
-                            marginBottom: '1.5rem',
+                            marginBottom: '1rem',
                         }}
                     >
-                        <h4 style={{ marginBottom: '0.5rem', color: 'var(--danger)' }}>Delete Account</h4>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                        <h4 style={{ marginBottom: '0.5rem', color: 'var(--danger)', fontSize: '1.0625rem' }}>Delete Account</h4>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '0.875rem', fontSize: '0.9375rem' }}>
                             Once you delete your account, there is no going back. All your data, transactions,
                             budgets, and categories will be permanently deleted.
                         </p>

@@ -14,6 +14,14 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [period, setPeriod] = useState('thisMonth');
+  const [customDateRange, setCustomDateRange] = useState({
+    startDate: '',
+    endDate: '',
+  });
+  const [dashboardPage, setDashboardPage] = useState(1);
+  const [dashboardPageSize] = useState(5);
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
+  const [budgetAlertsCount, setBudgetAlertsCount] = useState(0);
 
   const periodLabels = {
     thisMonth: 'This Month',
@@ -25,6 +33,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadDashboard();
+
+    // Request notification permission on first load
+    if (Notification.permission === 'default') {
+      setTimeout(() => setShowNotificationPrompt(true), 2000);
+    }
   }, [period]);
 
   // Auto-refresh when page becomes visible or user navigates to dashboard
@@ -131,55 +144,103 @@ const Dashboard = () => {
   return (
     <div
       className="container"
-      style={{ paddingTop: '2rem', paddingBottom: '3rem' }}
+      style={{ paddingTop: '1.25rem', paddingBottom: '2rem' }}
     >
-      {/* Header with Refresh Button */}
+      {/* Enhanced Header with Premium Filter Controls */}
       <div
+        className="card fade-in"
         style={{
-          marginBottom: '2.5rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          marginBottom: '1.5rem',
+          background: 'var(--bg-glass)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid var(--border)',
+          padding: '1.25rem',
         }}
-        className="fade-in"
       >
-        <div>
-          <h1 style={{ marginBottom: '0.5rem' }}>Financial Dashboard</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <h1 style={{ marginBottom: '0.25rem', fontSize: '1.875rem', fontWeight: '700' }}>Financial Dashboard</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
             {periodLabels[period]} Overview
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+
+        {/* Filter Controls Row */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <select
             value={period}
-            onChange={(e) => setPeriod(e.target.value)}
+            onChange={(e) => {
+              setPeriod(e.target.value);
+              if (e.target.value !== 'custom') {
+                setCustomDateRange({ startDate: '', endDate: '' });
+              }
+            }}
             className="form-select"
             style={{
-              minWidth: '160px',
-              padding: '0.625rem 1rem',
-              fontSize: '0.95rem',
+              minWidth: '150px',
+              padding: '0.75rem 1.125rem',
+              fontSize: '0.875rem',
               fontWeight: '600',
             }}
           >
-            <option value="thisMonth">This Month</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="last3Months">Last 3 Months</option>
-            <option value="thisYear">This Year</option>
-            <option value="allTime">All Time</option>
+            <option value="thisMonth">📅 This Month</option>
+            <option value="lastMonth">📅 Last Month</option>
+            <option value="last3Months">📅 Last 3 Months</option>
+            <option value="thisYear">📅 This Year</option>
+            <option value="allTime">📅 All Time</option>
+            <option value="custom">🗓️ Custom Range</option>
           </select>
+
+          {period === 'custom' && (
+            <>
+              <input
+                type="date"
+                value={customDateRange.startDate}
+                onChange={(e) => setCustomDateRange({ ...customDateRange, startDate: e.target.value })}
+                className="form-input"
+                style={{
+                  padding: '0.75rem 1.125rem',
+                  fontSize: '0.875rem',
+                  width: '150px',
+                }}
+              />
+              <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>→</span>
+              <input
+                type="date"
+                value={customDateRange.endDate}
+                onChange={(e) => setCustomDateRange({ ...customDateRange, endDate: e.target.value })}
+                className="form-input"
+                style={{
+                  padding: '0.75rem 1.125rem',
+                  fontSize: '0.875rem',
+                  width: '150px',
+                }}
+              />
+              <button
+                onClick={() => period === 'custom' && customDateRange.startDate && customDateRange.endDate && loadDashboard()}
+                className="btn btn-primary"
+                style={{ padding: '0.75rem 1.25rem', fontSize: '0.875rem' }}
+                disabled={!customDateRange.startDate || !customDateRange.endDate}
+              >
+                ✅ Apply
+              </button>
+            </>
+          )}
+
+          <div style={{ flex: '1' }}></div>
+
           <button
             onClick={handleRefresh}
             className="btn btn-outline"
             disabled={refreshing}
-            style={{ minWidth: '120px' }}
+            style={{ padding: '0.75rem 1.25rem', fontSize: '0.875rem', fontWeight: '600' }}
           >
-            {refreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
+            {refreshing ? '🔄 Refreshing...' : '🔄 Refresh Data'}
           </button>
         </div>
       </div>
 
       {/* Main Stats - First Row */}
-      <div className="grid grid-3" style={{ marginBottom: '2.5rem' }}>
+      <div className="grid grid-3" style={{ marginBottom: '1.5rem' }}>
         {/* Income Card */}
         <div
           className="stat-card scale-in"
@@ -194,17 +255,17 @@ const Dashboard = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              marginBottom: '1rem',
+              marginBottom: '0.625rem',
             }}
           >
             <div>
               <p
                 style={{
                   color: 'var(--text-muted)',
-                  fontSize: '0.875rem',
+                  fontSize: '0.75rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  marginBottom: '0.5rem',
+                  marginBottom: '0.375rem',
                 }}
               >
                 Total Income
@@ -212,7 +273,7 @@ const Dashboard = () => {
               <h2
                 style={{
                   margin: 0,
-                  fontSize: '2.25rem',
+                  fontSize: '1.875rem',
                   fontWeight: '800',
                   background:
                     'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -225,15 +286,15 @@ const Dashboard = () => {
             </div>
             <div
               style={{
-                width: '60px',
-                height: '60px',
+                width: '48px',
+                height: '48px',
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                borderRadius: '1rem',
+                borderRadius: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.75rem',
-                boxShadow: '0 8px 16px rgba(16, 185, 129, 0.3)',
+                fontSize: '1.5rem',
+                boxShadow: '0 6px 12px rgba(16, 185, 129, 0.3)',
               }}
             >
               💰
@@ -242,11 +303,19 @@ const Dashboard = () => {
           <p
             style={{
               color: 'var(--success)',
-              fontSize: '0.875rem',
+              fontSize: '0.8125rem',
               fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
             }}
           >
-            ↑ {periodLabels[period]}
+            <span>↑ {periodLabels[period]}</span>
+            {summary?.trends?.income && (
+              <span style={{ opacity: 0.8 }}>
+                {summary.trends.income > 0 ? '+' : ''}{summary.trends.income.toFixed(1)}%
+              </span>
+            )}
           </p>
         </div>
 
@@ -265,17 +334,17 @@ const Dashboard = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              marginBottom: '1rem',
+              marginBottom: '0.625rem',
             }}
           >
             <div>
               <p
                 style={{
                   color: 'var(--text-muted)',
-                  fontSize: '0.875rem',
+                  fontSize: '0.75rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  marginBottom: '0.5rem',
+                  marginBottom: '0.375rem',
                 }}
               >
                 Total Expenses
@@ -283,7 +352,7 @@ const Dashboard = () => {
               <h2
                 style={{
                   margin: 0,
-                  fontSize: '2.25rem',
+                  fontSize: '1.875rem',
                   fontWeight: '800',
                   background:
                     'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
@@ -296,15 +365,15 @@ const Dashboard = () => {
             </div>
             <div
               style={{
-                width: '60px',
-                height: '60px',
+                width: '48px',
+                height: '48px',
                 background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                borderRadius: '1rem',
+                borderRadius: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.75rem',
-                boxShadow: '0 8px 16px rgba(239, 68, 68, 0.3)',
+                fontSize: '1.5rem',
+                boxShadow: '0 6px 12px rgba(239, 68, 68, 0.3)',
               }}
             >
               💸
@@ -313,11 +382,19 @@ const Dashboard = () => {
           <p
             style={{
               color: 'var(--danger)',
-              fontSize: '0.875rem',
+              fontSize: '0.8125rem',
               fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
             }}
           >
-            ↓ {periodLabels[period]}
+            <span>↓ {periodLabels[period]}</span>
+            {summary?.trends?.expense && (
+              <span style={{ opacity: 0.8 }}>
+                {summary.trends.expense > 0 ? '+' : ''}{summary.trends.expense.toFixed(1)}%
+              </span>
+            )}
           </p>
         </div>
 
@@ -335,17 +412,17 @@ const Dashboard = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              marginBottom: '1rem',
+              marginBottom: '0.625rem',
             }}
           >
             <div>
               <p
                 style={{
                   color: 'var(--text-muted)',
-                  fontSize: '0.875rem',
+                  fontSize: '0.75rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  marginBottom: '0.5rem',
+                  marginBottom: '0.375rem',
                 }}
               >
                 Net Balance
@@ -353,7 +430,7 @@ const Dashboard = () => {
               <h2
                 style={{
                   margin: 0,
-                  fontSize: '2.25rem',
+                  fontSize: '1.875rem',
                   fontWeight: '800',
                   background: 'var(--gradient-primary)',
                   WebkitBackgroundClip: 'text',
@@ -365,14 +442,14 @@ const Dashboard = () => {
             </div>
             <div
               style={{
-                width: '60px',
-                height: '60px',
+                width: '48px',
+                height: '48px',
                 background: 'var(--gradient-primary)',
-                borderRadius: '1rem',
+                borderRadius: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.75rem',
+                fontSize: '1.5rem',
                 boxShadow: 'var(--shadow-glow)',
               }}
             >
@@ -382,7 +459,7 @@ const Dashboard = () => {
           <p
             style={{
               color: 'var(--text-secondary)',
-              fontSize: '0.875rem',
+              fontSize: '0.8125rem',
               fontWeight: '600',
             }}
           >
@@ -392,72 +469,72 @@ const Dashboard = () => {
       </div>
 
       {/* Second Row: Overview & Alerts */}
-      <div className="grid grid-2" style={{ marginBottom: '2.5rem' }}>
+      <div className="grid grid-2" style={{ marginBottom: '1.5rem' }}>
         {/* Financial Overview Card */}
         <div className="card" style={{ animationDelay: '0.3s' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>📈 Financial Overview</h3>
+          <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>📈 Financial Overview</h3>
 
           {/* Key Metrics */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Savings Rate</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: '700', color: savingsRate >= 20 ? 'var(--success)' : savingsRate >= 0 ? 'var(--warning)' : 'var(--danger)' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.125rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Savings Rate</span>
+                <span style={{ fontSize: '1.125rem', fontWeight: '700', color: savingsRate >= 20 ? 'var(--success)' : savingsRate >= 0 ? 'var(--warning)' : 'var(--danger)' }}>
                   {savingsRate.toFixed(1)}%
                 </span>
               </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
                 {savingsRate >= 20 ? 'Excellent! Keep it up' : savingsRate >= 0 ? 'Good, aim for 20%+' : 'Warning: Spending exceeds income'}
               </p>
             </div>
 
-            <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Daily Average</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+            <div style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.125rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Daily Average</span>
+                <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>
                   {formatCurrency(avgDailySpending)}
                 </span>
               </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
                 Your average spending per day
               </p>
             </div>
 
-            <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Top Category</span>
-                <span style={{ fontSize: '1rem', fontWeight: '600' }}>
+            <div style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.125rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Top Category</span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>
                   {topCategory?.category?.icon} {topCategory?.category?.name || 'N/A'}
                 </span>
               </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
                 {topCategory ? `${formatCurrency(topCategory.total)} (${topCategory.percentage.toFixed(1)}%)` : 'No expenses yet'}
               </p>
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Transactions</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.125rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Transactions</span>
+                <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>
                   {summary?.summary?.transactionCount || 0}
                 </span>
               </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
                 Total activities this period
               </p>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--border)' }}>
-            <h4 style={{ fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '1rem' }}>Quick Actions</h4>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
+          <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '2px solid var(--border)' }}>
+            <h4 style={{ fontSize: '0.8125rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>Quick Actions</h4>
+            <div style={{ display: 'grid', gap: '0.625rem' }}>
               <Link
                 to="/transactions"
                 className="btn btn-primary"
                 style={{
-                  padding: '0.875rem 1.25rem',
-                  fontSize: '0.9375rem',
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.875rem',
                   fontWeight: '600',
                   textDecoration: 'none',
                 }}
@@ -468,8 +545,8 @@ const Dashboard = () => {
                 to="/budgets"
                 className="btn btn-outline"
                 style={{
-                  padding: '0.875rem 1.25rem',
-                  fontSize: '0.9375rem',
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.875rem',
                   fontWeight: '600',
                   textDecoration: 'none',
                 }}
@@ -483,13 +560,13 @@ const Dashboard = () => {
         {/* Budget Alerts Card */}
         {budgetAlerts.length > 0 ? (
           <div className="card" style={{ animationDelay: '0.35s' }}>
-            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>⚠️ Budget Alerts</h3>
-            <div style={{ display: 'grid', gap: '1rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>⚠️ Budget Alerts</h3>
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
               {budgetAlerts.map((alert, index) => (
                 <div
                   key={index}
                   style={{
-                    padding: '1rem',
+                    padding: '0.75rem',
                     backgroundColor: alert.isOverBudget
                       ? 'rgba(239, 68, 68, 0.1)'
                       : 'rgba(251, 191, 36, 0.1)',
@@ -497,18 +574,18 @@ const Dashboard = () => {
                     borderRadius: 'var(--radius-md)',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>{alert.category?.icon}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '1.25rem' }}>{alert.category?.icon}</span>
                     <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontWeight: '700', fontSize: '1rem' }}>
+                      <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9375rem' }}>
                         {alert.category?.name}
                       </p>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
                         {alert.isOverBudget ? 'Over budget!' : 'Approaching limit'}
                       </p>
                     </div>
                   </div>
-                  <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: '0.8125rem', marginBottom: '0.375rem', display: 'flex', justifyContent: 'space-between' }}>
                     <span>Spent: {formatCurrency(alert.spent)}</span>
                     <span>Budget: {formatCurrency(alert.amount)}</span>
                   </div>
@@ -521,7 +598,7 @@ const Dashboard = () => {
                       }}
                     ></div>
                   </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right', margin: 0 }}>
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right', margin: 0 }}>
                     {alert.percentageUsed}% used
                   </p>
                 </div>
@@ -530,72 +607,22 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="card" style={{ animationDelay: '0.35s' }}>
-            <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>💰 Budget Status</h3>
-            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✓</div>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>All budgets on track</p>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>No alerts at this time</p>
+            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.125rem' }}>💰 Budget Status</h3>
+            <div style={{ textAlign: 'center', padding: '1.5rem 1rem' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✓</div>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '0.375rem', fontSize: '0.9375rem' }}>All budgets on track</p>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>No alerts at this time</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Budget Alerts */}
-      {budgetAlerts.length > 0 && (
-        <div style={{ marginBottom: '2.5rem' }} className="fade-in">
-          <h3 style={{ marginBottom: '1.5rem' }}>⚠️ Budget Alerts</h3>
-          <div className="grid grid-2">
-            {budgetAlerts.map((alert, index) => (
-              <div
-                key={index}
-                className="card scale-in"
-                style={{
-                  borderLeft: `4px solid ${alert.isOverBudget ? 'var(--danger)' : 'var(--warning)'}`,
-                  background: alert.isOverBudget
-                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%)'
-                    : 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, transparent 100%)',
-                  animationDelay: `${index * 0.05}s`,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '2rem' }}>{alert.category?.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontWeight: '700', fontSize: '1.1rem' }}>
-                      {alert.category?.name}
-                    </p>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                      {alert.isOverBudget ? 'Over budget!' : 'Approaching limit'}
-                    </p>
-                  </div>
-                </div>
-                <div style={{ marginBottom: '0.5rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
-                    <span>Spent: {formatCurrency(alert.spent)}</span>
-                    <span>Budget: {formatCurrency(alert.amount)}</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{
-                        width: `${Math.min(alert.percentageUsed, 100)}%`,
-                        background: alert.isOverBudget ? 'var(--danger)' : 'var(--warning)',
-                      }}
-                    ></div>
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right' }}>
-                    {alert.percentageUsed}% used
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Removed duplicate Budget Alerts section - now only showing in grid-2 above */}
 
       {/* Insights */}
       {insights && insights.insights?.length > 0 && (
-        <div style={{ marginBottom: '2.5rem' }} className="fade-in">
-          <h3 style={{ marginBottom: '1.5rem' }}>💡 Financial Insights</h3>
+        <div style={{ marginBottom: '1.5rem' }} className="fade-in">
+          <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>💡 Financial Insights</h3>
           <div className="grid grid-2">
             {insights.insights.map((insight, index) => (
               <div
@@ -615,9 +642,10 @@ const Dashboard = () => {
                       : insight.type === 'warning'
                         ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, transparent 100%)'
                         : 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%)',
+                  padding: '1rem',
                 }}
               >
-                <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6' }}>
+                <p style={{ margin: 0, fontSize: '0.9375rem', lineHeight: '1.5' }}>
                   {insight.message}
                 </p>
               </div>
@@ -628,31 +656,31 @@ const Dashboard = () => {
 
       {/* Category Breakdown */}
       {summary?.categoryBreakdown?.length > 0 && (
-        <div style={{ marginBottom: '2.5rem' }} className="fade-in">
-          <h3 style={{ marginBottom: '1.5rem' }}>📈 Spending by Category</h3>
+        <div style={{ marginBottom: '1.5rem' }} className="fade-in">
+          <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>📈 Spending by Category</h3>
           <div className="grid grid-2">
             {summary.categoryBreakdown.map((cat, index) => (
               <div
                 key={cat._id}
                 className="card scale-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
+                style={{ animationDelay: `${index * 0.05}s`, padding: '1rem' }}
               >
-                <div className="flex-between" style={{ marginBottom: '1rem' }}>
+                <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.75rem',
+                      gap: '0.625rem',
                     }}
                   >
-                    <span style={{ fontSize: '2rem' }}>
+                    <span style={{ fontSize: '1.75rem' }}>
                       {cat.category.icon}
                     </span>
                     <div>
                       <p
                         style={{
                           fontWeight: '700',
-                          fontSize: '1.1rem',
+                          fontSize: '1rem',
                           margin: 0,
                         }}
                       >
@@ -661,7 +689,7 @@ const Dashboard = () => {
                       <p
                         style={{
                           color: 'var(--text-muted)',
-                          fontSize: '0.875rem',
+                          fontSize: '0.8125rem',
                           margin: 0,
                         }}
                       >
@@ -673,7 +701,7 @@ const Dashboard = () => {
                     <p
                       style={{
                         fontWeight: '800',
-                        fontSize: '1.25rem',
+                        fontSize: '1.125rem',
                         margin: 0,
                       }}
                     >
@@ -682,7 +710,7 @@ const Dashboard = () => {
                     <p
                       style={{
                         color: 'var(--primary)',
-                        fontSize: '0.875rem',
+                        fontSize: '0.8125rem',
                         fontWeight: '600',
                         margin: 0,
                       }}
@@ -706,96 +734,140 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Recent Transactions */}
+      {/* Recent Transactions with Pagination */}
       {summary?.recentTransactions?.length > 0 && (
         <div className="fade-in">
-          <h3 style={{ marginBottom: '1.5rem' }}>🕐 Recent Transactions</h3>
-          <div className="card">
-            {summary.recentTransactions.map((transaction, index) => (
-              <div
-                key={transaction._id}
-                style={{
-                  padding: '1.25rem 0',
-                  borderBottom:
-                    index < summary.recentTransactions.length - 1
-                      ? '1px solid var(--border)'
-                      : 'none',
-                  transition: 'var(--transition-base)',
-                }}
-                onMouseEnter={e =>
-                  (e.currentTarget.style.background = 'var(--bg-glass)')
-                }
-                onMouseLeave={e =>
-                  (e.currentTarget.style.background = 'transparent')
-                }
-              >
-                <div className="flex-between">
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                    }}
-                  >
+          <div className="flex-between" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>🕒 Recent Transactions</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+              {summary.recentTransactions.length} total
+              {(() => {
+                const totalTxnPages = Math.ceil(summary.recentTransactions.length / dashboardPageSize);
+                return totalTxnPages > 1 ? ` • Page ${dashboardPage} of ${totalTxnPages}` : '';
+              })()}
+            </p>
+          </div>
+          <div className="card" style={{ padding: '1rem' }}>
+            {(() => {
+              const start = (dashboardPage - 1) * dashboardPageSize;
+              const end = start + dashboardPageSize;
+              const paginatedTxns = summary.recentTransactions.slice(start, end);
+              return paginatedTxns.map((transaction, index) => (
+                <div
+                  key={transaction._id}
+                  style={{
+                    padding: '0.875rem 0',
+                    borderBottom:
+                      index < summary.recentTransactions.length - 1
+                        ? '1px solid var(--border)'
+                        : 'none',
+                    transition: 'var(--transition-base)',
+                  }}
+                  onMouseEnter={e =>
+                    (e.currentTarget.style.background = 'var(--bg-glass)')
+                  }
+                  onMouseLeave={e =>
+                    (e.currentTarget.style.background = 'transparent')
+                  }
+                >
+                  <div className="flex-between">
                     <div
                       style={{
-                        width: '50px',
-                        height: '50px',
-                        background: 'var(--bg-tertiary)',
-                        borderRadius: 'var(--radius-md)',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.5rem',
+                        gap: '0.75rem',
                       }}
                     >
-                      {transaction.category.icon}
-                    </div>
-                    <div>
-                      <p
+                      <div
                         style={{
-                          fontWeight: '600',
-                          margin: 0,
-                          fontSize: '1.05rem',
+                          width: '40px',
+                          height: '40px',
+                          background: 'var(--bg-tertiary)',
+                          borderRadius: 'var(--radius-md)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.25rem',
                         }}
                       >
-                        {transaction.description || transaction.category.name}
-                      </p>
-                      <p
-                        style={{
-                          color: 'var(--text-muted)',
-                          fontSize: '0.875rem',
-                          margin: 0,
-                        }}
-                      >
-                        {new Date(transaction.date).toLocaleDateString(
-                          'en-US',
-                          {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          }
-                        )}
-                      </p>
+                        {transaction.category.icon}
+                      </div>
+                      <div>
+                        <p
+                          style={{
+                            fontWeight: '600',
+                            margin: 0,
+                            fontSize: '0.9375rem',
+                          }}
+                        >
+                          {transaction.description || transaction.category.name}
+                        </p>
+                        <p
+                          style={{
+                            color: 'var(--text-muted)',
+                            fontSize: '0.8125rem',
+                            margin: 0,
+                          }}
+                        >
+                          {new Date(transaction.date).toLocaleDateString(
+                            'en-US',
+                            {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            }
+                          )}
+                        </p>
+                      </div>
                     </div>
+                    <span
+                      style={{
+                        fontWeight: '800',
+                        fontSize: '1.125rem',
+                        color:
+                          transaction.type === 'income'
+                            ? 'var(--success)'
+                            : 'var(--danger)',
+                      }}
+                    >
+                      {transaction.type === 'income' ? '+' : '-'}
+                      {formatCurrency(transaction.amount)}
+                    </span>
                   </div>
-                  <span
-                    style={{
-                      fontWeight: '800',
-                      fontSize: '1.25rem',
-                      color:
-                        transaction.type === 'income'
-                          ? 'var(--success)'
-                          : 'var(--danger)',
-                    }}
-                  >
-                    {transaction.type === 'income' ? '+' : '-'}
-                    {formatCurrency(transaction.amount)}
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))
+            })()}
           </div>
+
+          {/* Pagination Controls for Dashboard */}
+          {(() => {
+            const totalPages = Math.ceil(summary.recentTransactions.length / dashboardPageSize);
+            if (totalPages <= 1) return null;
+
+            return (
+              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setDashboardPage(prev => Math.max(1, prev - 1))}
+                  disabled={dashboardPage === 1}
+                  className="btn btn-outline"
+                  style={{ padding: '0.5rem 0.875rem', fontSize: '0.8125rem' }}
+                >
+                  ‹ Prev
+                </button>
+                <span style={{ padding: '0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  {dashboardPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setDashboardPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={dashboardPage === totalPages}
+                  className="btn btn-outline"
+                  style={{ padding: '0.5rem 0.875rem', fontSize: '0.8125rem' }}
+                >
+                  Next ›
+                </button>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

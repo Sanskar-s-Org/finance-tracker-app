@@ -115,10 +115,16 @@ const Budgets = () => {
   return (
     <div
       className="container"
-      style={{ paddingTop: '2rem', paddingBottom: '2rem' }}
+      style={{ paddingTop: '1.25rem', paddingBottom: '1.5rem' }}
     >
-      <div className="flex-between mb-3">
-        <h1>Budgets</h1>
+      <div className="flex-between mb-2">
+        <div>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Budgets</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+            {new Date().toLocaleDateString('default', { month: 'long', year: 'numeric' })} •
+            {Math.ceil((new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate()))} days remaining
+          </p>
+        </div>
         <button
           onClick={() => editingId ? handleCancelEdit() : setShowForm(!showForm)}
           className="btn btn-primary"
@@ -128,8 +134,8 @@ const Budgets = () => {
       </div>
 
       {showForm && (
-        <div className="card mb-3 fade-in">
-          <h3>{editingId ? 'Edit Budget' : 'New Budget'}</h3>
+        <div className="card mb-2 fade-in" style={{ padding: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>{editingId ? 'Edit Budget' : 'New Budget'}</h3>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-2">
               <div className="form-group">
@@ -231,10 +237,21 @@ const Budgets = () => {
       {/* Budget List */}
       <div className="grid grid-2">
         {budgets.length === 0 ? (
-          <div className="card">
-            <p className="text-center text-muted">
-              No budgets set for this month. Create one to start tracking!
+          <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.5 }}>💰</div>
+            <h3 style={{ marginBottom: '0.5rem', fontSize: '1.125rem' }}>No budgets set</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
+              Set monthly budgets for your expense categories to track spending and stay on target
             </p>
+            {!showForm && (
+              <button
+                onClick={() => setShowForm(true)}
+                className="btn btn-primary"
+                style={{ fontSize: '0.9375rem' }}
+              >
+                💰 Create Your First Budget
+              </button>
+            )}
           </div>
         ) : (
           budgets.map(budget => (
@@ -247,10 +264,10 @@ const Budgets = () => {
                     gap: '0.5rem',
                   }}
                 >
-                  <span style={{ fontSize: '1.5rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>
                     {budget.category.icon}
                   </span>
-                  <h4 style={{ margin: 0 }}>{budget.category.name}</h4>
+                  <h4 style={{ margin: 0, fontSize: '1.0625rem' }}>{budget.category.name}</h4>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
@@ -270,20 +287,20 @@ const Budgets = () => {
                 </div>
               </div>
 
-              <div className="mb-2">
-                <div className="flex-between mb-1">
+              <div className="mb-1">
+                <div className="flex-between mb-1" style={{ fontSize: '0.9375rem' }}>
                   <span className="text-muted">Spent</span>
                   <span style={{ fontWeight: '600' }}>
                     {formatCurrency(budget.spent)}
                   </span>
                 </div>
-                <div className="flex-between mb-1">
+                <div className="flex-between mb-1" style={{ fontSize: '0.9375rem' }}>
                   <span className="text-muted">Budget</span>
                   <span style={{ fontWeight: '600' }}>
                     {formatCurrency(budget.amount)}
                   </span>
                 </div>
-                <div className="flex-between">
+                <div className="flex-between" style={{ fontSize: '0.9375rem' }}>
                   <span className="text-muted">Remaining</span>
                   <span
                     style={{
