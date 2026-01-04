@@ -25,7 +25,7 @@ export const getTransactions = async (req, res, next) => {
 
     // Pagination
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 1000;
     const skip = (page - 1) * limit;
 
     // Sort (default: newest first)

@@ -122,18 +122,18 @@ const Reports = () => {
     };
 
     return (
-        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '3rem' }}>
-            <div style={{ marginBottom: '2.5rem' }} className="fade-in">
-                <h1 style={{ marginBottom: '0.5rem' }}>📊 Reports & Export</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+        <div className="container" style={{ paddingTop: '1.25rem', paddingBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.5rem' }} className="fade-in">
+                <h1 style={{ marginBottom: '0.375rem', fontSize: '1.75rem' }}>📊 Reports & Export</h1>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
                     Generate custom reports and export your financial data
                 </p>
             </div>
 
             {/* Filters Card */}
-            <div className="card" style={{ marginBottom: '2rem' }}>
-                <h3 style={{ marginBottom: '1.5rem' }}>Filter Criteria</h3>
-                <div className="grid grid-2" style={{ marginBottom: '1.5rem' }}>
+            <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
+                <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Filter Criteria</h3>
+                <div className="grid grid-2" style={{ marginBottom: '1rem' }}>
                     <div className="form-group">
                         <label>Start Date</label>
                         <input
@@ -187,26 +187,27 @@ const Reports = () => {
 
             {/* Summary Cards */}
             {summary && (
-                <div className="grid grid-3" style={{ marginBottom: '2rem' }}>
-                    <div className="stat-card scale-in">
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                <div className="grid grid-3" style={{ marginBottom: '1.5rem' }}>
+                    <div className="stat-card scale-in" style={{ padding: '1rem' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.375rem' }}>
                             Total Income
                         </p>
-                        <h2 style={{ margin: 0, color: 'var(--success)' }}>{formatCurrency(summary.income)}</h2>
+                        <h2 style={{ margin: 0, color: 'var(--success)', fontSize: '1.5rem' }}>{formatCurrency(summary.income)}</h2>
                     </div>
-                    <div className="stat-card scale-in" style={{ animationDelay: '0.1s' }}>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    <div className="stat-card scale-in" style={{ animationDelay: '0.1s', padding: '1rem' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.375rem' }}>
                             Total Expense
                         </p>
-                        <h2 style={{ margin: 0, color: 'var(--danger)' }}>{formatCurrency(summary.expense)}</h2>
+                        <h2 style={{ margin: 0, color: 'var(--danger)', fontSize: '1.5rem' }}>{formatCurrency(summary.expense)}</h2>
                     </div>
-                    <div className="stat-card scale-in" style={{ animationDelay: '0.2s' }}>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    <div className="stat-card scale-in" style={{ animationDelay: '0.2s', padding: '1rem' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.375rem' }}>
                             Net Balance
                         </p>
                         <h2
                             style={{
                                 margin: 0,
+                                fontSize: '1.5rem',
                                 color: summary.balance >= 0 ? 'var(--success)' : 'var(--danger)',
                             }}
                         >
@@ -217,9 +218,9 @@ const Reports = () => {
             )}
 
             {/* Export Options */}
-            <div className="card">
-                <h3 style={{ marginBottom: '1.5rem' }}>Export Options</h3>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+            <div className="card" style={{ padding: '1.25rem' }}>
+                <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Export Options</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9375rem' }}>
                     Export your filtered transactions and reports in various formats
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -232,11 +233,11 @@ const Reports = () => {
                 </div>
                 <div
                     style={{
-                        marginTop: '1.5rem',
-                        padding: '1rem',
+                        marginTop: '1rem',
+                        padding: '0.875rem',
                         background: 'var(--bg-tertiary)',
                         borderRadius: 'var(--radius-md)',
-                        fontSize: '0.875rem',
+                        fontSize: '0.8125rem',
                         color: 'var(--text-secondary)',
                     }}
                 >

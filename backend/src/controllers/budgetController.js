@@ -190,8 +190,11 @@ export const getBudgetAlerts = async (req, res, next) => {
     const alerts = budgets
       .filter(budget => budget.isOverBudget || budget.isNearLimit)
       .map(budget => ({
-        budget,
-        type: budget.isOverBudget ? 'over' : 'warning',
+        ...budget.toObject(), // Flatten budget properties to top level
+        isOverBudget: budget.isOverBudget,
+        isNearLimit: budget.isNearLimit,
+        percentageUsed: budget.percentageUsed,
+        remaining: budget.remaining,
         message: budget.isOverBudget
           ? `You've exceeded your budget for ${budget.category.name}`
           : `You've used ${budget.percentageUsed}% of your budget for ${budget.category.name}`,
