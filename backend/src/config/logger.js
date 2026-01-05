@@ -32,14 +32,24 @@ const format = winston.format.combine(
   )
 );
 
+// Only use console transport in production/Vercel (no file system access)
+const isProduction = process.env.NODE_ENV === 'production';
+const isVercel = process.env.VERCEL === '1';
+
 const transports = [
   new winston.transports.Console(),
-  new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error',
-  }),
-  new winston.transports.File({ filename: 'logs/all.log' }),
 ];
+
+// Add file transports only in development
+if (!isProduction && !isVercel) {
+  transports.push(
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+    }),
+    new winston.transports.File({ filename: 'logs/all.log' })
+  );
+}
 
 const logger = winston.createLogger({
   level: level(),
