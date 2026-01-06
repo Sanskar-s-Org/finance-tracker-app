@@ -209,8 +209,14 @@ const Transactions = () => {
       style={{ paddingTop: '1.25rem', paddingBottom: '1.5rem' }}
     >
       {/* Clean Header */}
-      <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
-        <div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: '1.5rem',
+        gap: '1rem'
+      }}>
+        <div style={{ flex: '1', minWidth: 0 }}>
           <h1 style={{ fontSize: '1.875rem', marginBottom: '0.375rem', fontWeight: '700' }}>Transactions</h1>
           {totalTransactions > 0 && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
@@ -223,9 +229,20 @@ const Transactions = () => {
         <button
           onClick={() => editingId ? handleCancelEdit() : setShowForm(!showForm)}
           className="btn btn-primary"
-          style={{ fontSize: '0.9375rem', padding: '0.75rem 1.5rem' }}
+          style={{
+            fontSize: '0.9375rem',
+            padding: '0.75rem 1.5rem',
+            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
         >
-          {showForm ? '✖ Cancel' : '+ Add Transaction'}
+          {showForm ? (
+            <>✕ Cancel</>
+          ) : (
+            <>+ Add Transaction</>
+          )}
         </button>
       </div>
 
@@ -498,98 +515,129 @@ const Transactions = () => {
         </div>
       )}
 
-      {/* Transaction List */}
-      <div className="card" style={{ padding: '1.25rem' }}>
-        {filteredTransactions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.5 }}>💸</div>
-            <h3 style={{ marginBottom: '0.5rem', fontSize: '1.125rem' }}>No transactions found</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-              {searchQuery || hasActiveFilters
-                ? 'Try adjusting your search or filters'
-                : 'Start tracking your finances by adding your first transaction'}
-            </p>
-            {!showForm && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="btn btn-primary"
-                style={{ fontSize: '0.9375rem' }}
-              >
-                ➕ Add Your First Transaction
-              </button>
-            )}
-          </div>
-        ) : (
-          paginatedTransactions.map(transaction => (
-            <div
-              key={transaction._id}
-              className="flex-between"
-              style={{
-                padding: '0.75rem 0',
-                borderBottom: '1px solid var(--border)',
-              }}
+      {/* Professional Transaction Table */}
+      {filteredTransactions.length === 0 ? (
+        <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.4 }}>💸</div>
+          <h3 style={{ marginBottom: '0.625rem', fontSize: '1.25rem', fontWeight: '700' }}>No transactions found</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9375rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
+            {searchQuery || hasActiveFilters
+              ? 'Try adjusting your search or filters to find transactions'
+              : 'Start tracking your finances by adding your first transaction'}
+          </p>
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn btn-primary"
+              style={{ fontSize: '0.9375rem', padding: '0.75rem 1.5rem' }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  flex: 1,
-                }}
-              >
-                <span style={{ fontSize: '1.25rem' }}>
-                  {transaction.category.icon}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: '600', margin: 0, fontSize: '0.9375rem' }}>
-                    {transaction.description || transaction.category.name}
-                  </p>
-                  <p
-                    className="text-muted"
-                    style={{ fontSize: '0.8125rem', margin: 0 }}
-                  >
-                    {new Date(transaction.date).toLocaleDateString()} •{' '}
-                    {transaction.paymentMethod}
-                  </p>
-                </div>
-              </div>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
-              >
-                <span
-                  style={{
-                    fontWeight: '700',
-                    fontSize: '1.0625rem',
-                    color:
-                      transaction.type === 'income'
-                        ? 'var(--success)'
-                        : 'var(--danger)',
-                  }}
-                >
-                  {transaction.type === 'income' ? '+' : '-'}
-                  {formatCurrency(transaction.amount)}
-                </span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => handleEdit(transaction)}
-                    className="btn btn-primary"
-                    style={{ padding: '0.5rem 1rem' }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(transaction._id)}
-                    className="btn btn-danger"
-                    style={{ padding: '0.5rem 1rem' }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+              ➕ Add Your First Transaction
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '110px' }}>Date</th>
+                  <th>Description</th>
+                  <th style={{ width: '200px' }}>Category</th>
+                  <th style={{ width: '120px' }}>Payment</th>
+                  <th style={{ width: '100px' }}>Type</th>
+                  <th style={{ width: '140px', textAlign: 'right' }}>Amount</th>
+                  <th style={{ width: '100px', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedTransactions.map(transaction => (
+                  <tr key={transaction._id}>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: '500' }}>
+                      {new Date(transaction.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: '600', fontSize: '0.9375rem' }}>
+                        {transaction.description || transaction.category.name}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>{transaction.category.icon}</span>
+                        <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{transaction.category.name}</span>
+                      </div>
+                    </td>
+                    <td style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                      {transaction.paymentMethod.replace('_', ' ')}
+                    </td>
+                    <td>
+                      <span className={`status-badge ${transaction.type}`}>
+                        {transaction.type}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span
+                        style={{
+                          fontWeight: '800',
+                          fontSize: '1rem',
+                          color: transaction.type === 'income' ? 'var(--success)' : 'var(--danger)',
+                        }}
+                      >
+                        {transaction.type === 'income' ? '+' : '-'}
+                        {formatCurrency(transaction.amount)}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <button
+                          onClick={() => handleEdit(transaction)}
+                          className="btn btn-primary"
+                          style={{
+                            padding: '0.5rem',
+                            fontSize: '1rem',
+                            minWidth: 'auto',
+                            width: '36px',
+                            height: '36px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 'var(--radius-md)'
+                          }}
+                          title="Edit transaction"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          onClick={() => handleDelete(transaction._id)}
+                          className="btn btn-danger"
+                          style={{
+                            padding: '0.5rem',
+                            fontSize: '1.125rem',
+                            minWidth: 'auto',
+                            width: '36px',
+                            height: '36px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 'var(--radius-md)'
+                          }}
+                          title="Delete transaction"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Pagination Controls */}
       {totalPages > 1 && (

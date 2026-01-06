@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../context/AuthContext';
 import { dashboardService, budgetService } from '../services';
+import DonutChart from '../components/DonutChart';
+import MiniTrendChart from '../components/MiniTrendChart';
 
 const Dashboard = () => {
   const { fetchDashboard } = useFinance();
@@ -18,10 +20,6 @@ const Dashboard = () => {
     startDate: '',
     endDate: '',
   });
-  const [dashboardPage, setDashboardPage] = useState(1);
-  const [dashboardPageSize] = useState(5);
-  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
-  const [budgetAlertsCount, setBudgetAlertsCount] = useState(0);
 
   const periodLabels = {
     thisMonth: 'This Month',
@@ -33,14 +31,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadDashboard();
-
-    // Request notification permission on first load
-    if (Notification.permission === 'default') {
-      setTimeout(() => setShowNotificationPrompt(true), 2000);
-    }
   }, [period]);
 
-  // Auto-refresh when page becomes visible or user navigates to dashboard
+  // Auto-refresh when page becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
@@ -48,16 +41,13 @@ const Dashboard = () => {
       }
     };
 
-    // Listen for visibility changes (tab switches)
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Refresh on mount (when user navigates to dashboard)
     loadDashboard();
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []); // Empty deps - only on mount/unmount
+  }, []);
 
   const loadDashboard = async () => {
     try {
@@ -111,42 +101,25 @@ const Dashboard = () => {
   // Calculate quick stats
   const income = summary?.summary?.income || 0;
   const expense = summary?.summary?.expense || 0;
+  const balance = summary?.summary?.balance || 0;
   const savingsRate = income > 0 ? ((income - expense) / income * 100) : 0;
 
-  // Calculate days in period for avg daily spending
-  const getDaysInPeriod = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-
-    switch (period) {
-      case 'lastMonth': {
-        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-        return new Date(lastMonthYear, lastMonth + 1, 0).getDate();
-      }
-      case 'last3Months':
-        return 90;
-      case 'thisYear':
-        const dayOfYear = Math.floor((today - new Date(currentYear, 0, 0)) / 1000 / 60 / 60 / 24);
-        return dayOfYear;
-      case 'allTime':
-        return summary?.summary?.transactionCount || 1;
-      case 'thisMonth':
-      default:
-        return today.getDate();
-    }
-  };
-
-  const avgDailySpending = expense / (getDaysInPeriod() || 1);
-  const topCategory = summary?.categoryBreakdown?.[0];
+  // Prepare donut chart data
+  const expenseChartData = summary?.categoryBreakdown?.slice(0, 5).map(cat => ({
+    label: cat.category.name,
+    value: cat.total,
+    color: cat.category.color,
+    icon: cat.category.icon,
+    formattedValue: formatCurrency(cat.total),
+    percentage: cat.percentage,
+  })) || [];
 
   return (
     <div
       className="container"
       style={{ paddingTop: '1.25rem', paddingBottom: '2rem' }}
     >
-      {/* Enhanced Header with Premium Filter Controls */}
+      {/* ==================== HEADER SECTION ==================== */}
       <div
         className="card fade-in"
         style={{
@@ -164,7 +137,7 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Filter Controls Row */}
+        {/* Filter Controls */}
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <select
             value={period}
@@ -234,12 +207,12 @@ const Dashboard = () => {
             disabled={refreshing}
             style={{ padding: '0.75rem 1.25rem', fontSize: '0.875rem', fontWeight: '600' }}
           >
-            {refreshing ? '🔄 Refreshing...' : '🔄 Refresh Data'}
+            {refreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
           </button>
         </div>
       </div>
 
-      {/* Main Stats - First Row */}
+      {/* ==================== SUMMARY STATS ROW ==================== */}
       <div className="grid grid-3" style={{ marginBottom: '1.5rem' }}>
         {/* Income Card */}
         <div
@@ -250,73 +223,73 @@ const Dashboard = () => {
             borderColor: 'rgba(16, 185, 129, 0.3)',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              marginBottom: '0.625rem',
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  color: 'var(--text-muted)',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '0.375rem',
-                }}
-              >
-                Total Income
-              </p>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: '1.875rem',
-                  fontWeight: '800',
-                  background:
-                    'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                {formatCurrency(income)}
-              </h2>
-            </div>
+          <div className="stat-card-content">
             <div
               style={{
-                width: '48px',
-                height: '48px',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                borderRadius: '0.875rem',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                boxShadow: '0 6px 12px rgba(16, 185, 129, 0.3)',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '0.625rem',
               }}
             >
-              💰
+              <div>
+                <p
+                  style={{
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '0.375rem',
+                  }}
+                >
+                  Total Income
+                </p>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: '1.875rem',
+                    fontWeight: '800',
+                    background:
+                      'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {formatCurrency(income)}
+                </h2>
+              </div>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  borderRadius: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 6px 12px rgba(16, 185, 129, 0.3)',
+                }}
+              >
+                💰
+              </div>
             </div>
-          </div>
-          <p
-            style={{
-              color: 'var(--success)',
-              fontSize: '0.8125rem',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-            }}
-          >
-            <span>↑ {periodLabels[period]}</span>
-            {summary?.trends?.income && (
-              <span style={{ opacity: 0.8 }}>
-                {summary.trends.income > 0 ? '+' : ''}{summary.trends.income.toFixed(1)}%
-              </span>
+            {summary?.trends?.income !== undefined && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <span className={`percentage-badge ${summary.trends.income >= 0 ? 'positive' : 'negative'}`}>
+                  {summary.trends.income >= 0 ? '↑' : '↓'} {Math.abs(summary.trends.income).toFixed(1)}%
+                </span>
+              </div>
             )}
-          </p>
+          </div>
+          {trends.length > 0 && (
+            <div className="stat-card-trend">
+              <MiniTrendChart
+                data={trends.map(t => t.income || 0)}
+                color="#10b981"
+              />
+            </div>
+          )}
         </div>
 
         {/* Expense Card */}
@@ -329,73 +302,73 @@ const Dashboard = () => {
             animationDelay: '0.1s',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              marginBottom: '0.625rem',
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  color: 'var(--text-muted)',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '0.375rem',
-                }}
-              >
-                Total Expenses
-              </p>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: '1.875rem',
-                  fontWeight: '800',
-                  background:
-                    'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                {formatCurrency(expense)}
-              </h2>
-            </div>
+          <div className="stat-card-content">
             <div
               style={{
-                width: '48px',
-                height: '48px',
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                borderRadius: '0.875rem',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                boxShadow: '0 6px 12px rgba(239, 68, 68, 0.3)',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '0.625rem',
               }}
             >
-              💸
+              <div>
+                <p
+                  style={{
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '0.375rem',
+                  }}
+                >
+                  Total Expenses
+                </p>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: '1.875rem',
+                    fontWeight: '800',
+                    background:
+                      'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {formatCurrency(expense)}
+                </h2>
+              </div>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  borderRadius: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 6px 12px rgba(239, 68, 68, 0.3)',
+                }}
+              >
+                💸
+              </div>
             </div>
-          </div>
-          <p
-            style={{
-              color: 'var(--danger)',
-              fontSize: '0.8125rem',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-            }}
-          >
-            <span>↓ {periodLabels[period]}</span>
-            {summary?.trends?.expense && (
-              <span style={{ opacity: 0.8 }}>
-                {summary.trends.expense > 0 ? '+' : ''}{summary.trends.expense.toFixed(1)}%
-              </span>
+            {summary?.trends?.expense !== undefined && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <span className={`percentage-badge ${summary.trends.expense >= 0 ? 'negative' : 'positive'}`}>
+                  {summary.trends.expense >= 0 ? '↑' : '↓'} {Math.abs(summary.trends.expense).toFixed(1)}%
+                </span>
+              </div>
             )}
-          </p>
+          </div>
+          {trends.length > 0 && (
+            <div className="stat-card-trend">
+              <MiniTrendChart
+                data={trends.map(t => t.expense || 0)}
+                color="#ef4444"
+              />
+            </div>
+          )}
         </div>
 
         {/* Net Balance Card */}
@@ -407,126 +380,131 @@ const Dashboard = () => {
             animationDelay: '0.2s',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              marginBottom: '0.625rem',
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  color: 'var(--text-muted)',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '0.375rem',
-                }}
-              >
-                Net Balance
-              </p>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: '1.875rem',
-                  fontWeight: '800',
-                  background: 'var(--gradient-primary)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                {formatCurrency(summary?.summary?.balance || 0)}
-              </h2>
-            </div>
+          <div className="stat-card-content">
             <div
               style={{
-                width: '48px',
-                height: '48px',
-                background: 'var(--gradient-primary)',
-                borderRadius: '0.875rem',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                boxShadow: 'var(--shadow-glow)',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '0.625rem',
               }}
             >
-              📊
+              <div>
+                <p
+                  style={{
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '0.375rem',
+                  }}
+                >
+                  Net Balance
+                </p>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: '1.875rem',
+                    fontWeight: '800',
+                    background: 'var(--gradient-primary)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {formatCurrency(balance)}
+                </h2>
+              </div>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  background: 'var(--gradient-primary)',
+                  borderRadius: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: 'var(--shadow-glow)',
+                }}
+              >
+                📊
+              </div>
+            </div>
+            <div style={{ marginTop: '0.5rem' }}>
+              <span className={`percentage-badge ${savingsRate >= 0 ? 'positive' : 'negative'}`}>
+                {savingsRate >= 20 ? '✓ Excellent' : savingsRate >= 0 ? '○ Good' : '⚠ Alert'}
+              </span>
             </div>
           </div>
-          <p
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.8125rem',
-              fontWeight: '600',
-            }}
-          >
-            {income > expense ? '✓ Saving money' : expense > income ? '⚠ Deficit' : 'Breaking even'}
-          </p>
+          {trends.length > 0 && (
+            <div className="stat-card-trend">
+              <MiniTrendChart
+                data={trends.map(t => (t.income || 0) - (t.expense || 0))}
+                color="#6366f1"
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Second Row: Overview & Alerts */}
-      <div className="grid grid-2" style={{ marginBottom: '1.5rem' }}>
-        {/* Financial Overview Card */}
-        <div className="card" style={{ animationDelay: '0.3s' }}>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>📈 Financial Overview</h3>
+      {/* ==================== ANALYTICS SECTION ==================== */}
+      <div className="analytics-grid" style={{ marginBottom: '1.5rem' }}>
+        {/* Left Column: Expense Breakdown Chart */}
+        <div className="card fade-in">
+          <div className="section-header">
+            <h3>📊 Expense Breakdown</h3>
+            <span className="section-header-meta">Top 5 Categories</span>
+          </div>
 
-          {/* Key Metrics */}
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.125rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Savings Rate</span>
-                <span style={{ fontSize: '1.125rem', fontWeight: '700', color: savingsRate >= 20 ? 'var(--success)' : savingsRate >= 0 ? 'var(--warning)' : 'var(--danger)' }}>
-                  {savingsRate.toFixed(1)}%
-                </span>
-              </div>
-              <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                {savingsRate >= 20 ? 'Excellent! Keep it up' : savingsRate >= 0 ? 'Good, aim for 20%+' : 'Warning: Spending exceeds income'}
-              </p>
+          {expenseChartData.length > 0 ? (
+            <DonutChart
+              data={expenseChartData}
+              centerValue={formatCurrency(expense)}
+              centerLabel="Total"
+            />
+          ) : (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+              <p>No expense data available</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Financial Overview + Quick Actions */}
+        <div className="card fade-in">
+          <div className="section-header">
+            <h3>📈 Financial Overview</h3>
+          </div>
+
+          {/* Compact Stats */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div className="compact-stat">
+              <span className="compact-stat-label">💹 Savings Rate</span>
+              <span className="compact-stat-value" style={{
+                color: savingsRate >= 20 ? 'var(--success)' : savingsRate >= 0 ? 'var(--warning)' : 'var(--danger)'
+              }}>
+                {savingsRate.toFixed(1)}%
+              </span>
             </div>
 
-            <div style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.125rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Daily Average</span>
-                <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>
-                  {formatCurrency(avgDailySpending)}
-                </span>
-              </div>
-              <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                Your average spending per day
-              </p>
+            <div className="compact-stat">
+              <span className="compact-stat-label">📝 Transactions</span>
+              <span className="compact-stat-value">{summary?.summary?.transactionCount || 0}</span>
             </div>
 
-            <div style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.125rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Top Category</span>
-                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>
-                  {topCategory?.category?.icon} {topCategory?.category?.name || 'N/A'}
-                </span>
-              </div>
-              <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                {topCategory ? `${formatCurrency(topCategory.total)} (${topCategory.percentage.toFixed(1)}%)` : 'No expenses yet'}
-              </p>
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.125rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Transactions</span>
-                <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>
-                  {summary?.summary?.transactionCount || 0}
-                </span>
-              </div>
-              <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                Total activities this period
-              </p>
+            <div className="compact-stat">
+              <span className="compact-stat-label">🎯 Budget Status</span>
+              <span className="compact-stat-value" style={{ fontSize: '0.9375rem' }}>
+                {budgetAlerts.length > 0 ? (
+                  <span style={{ color: 'var(--warning)' }}>{budgetAlerts.length} alert{budgetAlerts.length > 1 ? 's' : ''}</span>
+                ) : (
+                  <span style={{ color: 'var(--success)' }}>On Track ✓</span>
+                )}
+              </span>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '2px solid var(--border)' }}>
+          <div style={{ paddingTop: '1rem', borderTop: '2px solid var(--border)' }}>
             <h4 style={{ fontSize: '0.8125rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>Quick Actions</h4>
             <div style={{ display: 'grid', gap: '0.625rem' }}>
               <Link
@@ -556,73 +534,66 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* Budget Alerts Card */}
-        {budgetAlerts.length > 0 ? (
-          <div className="card" style={{ animationDelay: '0.35s' }}>
-            <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>⚠️ Budget Alerts</h3>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {budgetAlerts.map((alert, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: '0.75rem',
-                    backgroundColor: alert.isOverBudget
-                      ? 'rgba(239, 68, 68, 0.1)'
-                      : 'rgba(251, 191, 36, 0.1)',
-                    borderLeft: `4px solid ${alert.isOverBudget ? 'var(--danger)' : 'var(--warning)'}`,
-                    borderRadius: 'var(--radius-md)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '1.25rem' }}>{alert.category?.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9375rem' }}>
-                        {alert.category?.name}
-                      </p>
-                      <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                        {alert.isOverBudget ? 'Over budget!' : 'Approaching limit'}
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', marginBottom: '0.375rem', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Spent: {formatCurrency(alert.spent)}</span>
-                    <span>Budget: {formatCurrency(alert.amount)}</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{
-                        width: `${Math.min(alert.percentageUsed, 100)}%`,
-                        background: alert.isOverBudget ? 'var(--danger)' : 'var(--warning)',
-                      }}
-                    ></div>
-                  </div>
-                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right', margin: 0 }}>
-                    {alert.percentageUsed}% used
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="card" style={{ animationDelay: '0.35s' }}>
-            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.125rem' }}>💰 Budget Status</h3>
-            <div style={{ textAlign: 'center', padding: '1.5rem 1rem' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✓</div>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '0.375rem', fontSize: '0.9375rem' }}>All budgets on track</p>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>No alerts at this time</p>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Removed duplicate Budget Alerts section - now only showing in grid-2 above */}
+      {/* ==================== BUDGET ALERTS SECTION ==================== */}
+      {budgetAlerts.length > 0 && (
+        <div style={{ marginBottom: '1.5rem' }} className="fade-in">
+          <div className="section-header">
+            <h3>⚠️ Budget Alerts</h3>
+          </div>
+          <div className="grid grid-2">
+            {budgetAlerts.map((alert, index) => (
+              <div
+                key={index}
+                className="card"
+                style={{
+                  padding: '1rem',
+                  borderLeft: `4px solid ${alert.isOverBudget ? 'var(--danger)' : 'var(--warning)'}`,
+                  background: alert.isOverBudget
+                    ? 'rgba(239, 68, 68, 0.05)'
+                    : 'rgba(251, 191, 36, 0.05)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>{alert.category?.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9375rem' }}>
+                      {alert.category?.name}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                      {alert.isOverBudget ? 'Over budget!' : 'Approaching limit'}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.8125rem', marginBottom: '0.375rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Spent: {formatCurrency(alert.spent)}</span>
+                  <span>Budget: {formatCurrency(alert.amount)}</span>
+                </div>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${Math.min(alert.percentageUsed, 100)}%`,
+                      background: alert.isOverBudget ? 'var(--danger)' : 'var(--warning)',
+                    }}
+                  ></div>
+                </div>
+                <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right', margin: 0 }}>
+                  {alert.percentageUsed}% used
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* Insights */}
+      {/* ==================== INSIGHTS SECTION ==================== */}
       {insights && insights.insights?.length > 0 && (
         <div style={{ marginBottom: '1.5rem' }} className="fade-in">
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>💡 Financial Insights</h3>
+          <div className="section-header">
+            <h3>💡 Financial Insights</h3>
+          </div>
           <div className="grid grid-2">
             {insights.insights.map((insight, index) => (
               <div
@@ -654,220 +625,76 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Category Breakdown */}
-      {summary?.categoryBreakdown?.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }} className="fade-in">
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>📈 Spending by Category</h3>
-          <div className="grid grid-2">
-            {summary.categoryBreakdown.map((cat, index) => (
-              <div
-                key={cat._id}
-                className="card scale-in"
-                style={{ animationDelay: `${index * 0.05}s`, padding: '1rem' }}
-              >
-                <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.625rem',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.75rem' }}>
-                      {cat.category.icon}
-                    </span>
-                    <div>
-                      <p
-                        style={{
-                          fontWeight: '700',
-                          fontSize: '1rem',
-                          margin: 0,
-                        }}
-                      >
-                        {cat.category.name}
-                      </p>
-                      <p
-                        style={{
-                          color: 'var(--text-muted)',
-                          fontSize: '0.8125rem',
-                          margin: 0,
-                        }}
-                      >
-                        {cat.count} transactions
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p
-                      style={{
-                        fontWeight: '800',
-                        fontSize: '1.125rem',
-                        margin: 0,
-                      }}
-                    >
-                      {formatCurrency(cat.total)}
-                    </p>
-                    <p
-                      style={{
-                        color: 'var(--primary)',
-                        fontSize: '0.8125rem',
-                        fontWeight: '600',
-                        margin: 0,
-                      }}
-                    >
-                      {cat.percentage.toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{
-                      width: `${cat.percentage}%`,
-                      background: `linear-gradient(90deg, ${cat.category.color}, ${cat.category.color}dd)`,
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recent Transactions with Pagination */}
+      {/* ==================== RECENT TRANSACTIONS TABLE ==================== */}
       {summary?.recentTransactions?.length > 0 && (
         <div className="fade-in">
-          <div className="flex-between" style={{ marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>🕒 Recent Transactions</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
-              {summary.recentTransactions.length} total
-              {(() => {
-                const totalTxnPages = Math.ceil(summary.recentTransactions.length / dashboardPageSize);
-                return totalTxnPages > 1 ? ` • Page ${dashboardPage} of ${totalTxnPages}` : '';
-              })()}
-            </p>
+          <div className="section-header">
+            <h3>🕒 Recent Transactions</h3>
+            <span className="section-header-meta">Last {summary.recentTransactions.length} activities</span>
           </div>
-          <div className="card" style={{ padding: '1rem' }}>
-            {(() => {
-              const start = (dashboardPage - 1) * dashboardPageSize;
-              const end = start + dashboardPageSize;
-              const paginatedTxns = summary.recentTransactions.slice(start, end);
-              return paginatedTxns.map((transaction, index) => (
-                <div
-                  key={transaction._id}
-                  style={{
-                    padding: '0.875rem 0',
-                    borderBottom:
-                      index < summary.recentTransactions.length - 1
-                        ? '1px solid var(--border)'
-                        : 'none',
-                    transition: 'var(--transition-base)',
-                  }}
-                  onMouseEnter={e =>
-                    (e.currentTarget.style.background = 'var(--bg-glass)')
-                  }
-                  onMouseLeave={e =>
-                    (e.currentTarget.style.background = 'transparent')
-                  }
-                >
-                  <div className="flex-between">
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                      }}
-                    >
-                      <div
+
+          <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Type</th>
+                  <th style={{ textAlign: 'right' }}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.recentTransactions.slice(0, 10).map((transaction) => (
+                  <tr key={transaction._id}>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                      {new Date(transaction.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: '600' }}>
+                        {transaction.description || transaction.category.name}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>{transaction.category.icon}</span>
+                        <span>{transaction.category.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${transaction.type}`}>
+                        {transaction.type}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span
                         style={{
-                          width: '40px',
-                          height: '40px',
-                          background: 'var(--bg-tertiary)',
-                          borderRadius: 'var(--radius-md)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '1.25rem',
+                          fontWeight: '800',
+                          fontSize: '1rem',
+                          color: transaction.type === 'income' ? 'var(--success)' : 'var(--danger)',
                         }}
                       >
-                        {transaction.category.icon}
-                      </div>
-                      <div>
-                        <p
-                          style={{
-                            fontWeight: '600',
-                            margin: 0,
-                            fontSize: '0.9375rem',
-                          }}
-                        >
-                          {transaction.description || transaction.category.name}
-                        </p>
-                        <p
-                          style={{
-                            color: 'var(--text-muted)',
-                            fontSize: '0.8125rem',
-                            margin: 0,
-                          }}
-                        >
-                          {new Date(transaction.date).toLocaleDateString(
-                            'en-US',
-                            {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            }
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      style={{
-                        fontWeight: '800',
-                        fontSize: '1.125rem',
-                        color:
-                          transaction.type === 'income'
-                            ? 'var(--success)'
-                            : 'var(--danger)',
-                      }}
-                    >
-                      {transaction.type === 'income' ? '+' : '-'}
-                      {formatCurrency(transaction.amount)}
-                    </span>
-                  </div>
-                </div>
-              ))
-            })()}
+                        {transaction.type === 'income' ? '+' : '-'}
+                        {formatCurrency(transaction.amount)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          {/* Pagination Controls for Dashboard */}
-          {(() => {
-            const totalPages = Math.ceil(summary.recentTransactions.length / dashboardPageSize);
-            if (totalPages <= 1) return null;
-
-            return (
-              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                <button
-                  onClick={() => setDashboardPage(prev => Math.max(1, prev - 1))}
-                  disabled={dashboardPage === 1}
-                  className="btn btn-outline"
-                  style={{ padding: '0.5rem 0.875rem', fontSize: '0.8125rem' }}
-                >
-                  ‹ Prev
-                </button>
-                <span style={{ padding: '0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                  {dashboardPage} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setDashboardPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={dashboardPage === totalPages}
-                  className="btn btn-outline"
-                  style={{ padding: '0.5rem 0.875rem', fontSize: '0.8125rem' }}
-                >
-                  Next ›
-                </button>
-              </div>
-            );
-          })()}
+          {summary.recentTransactions.length > 10 && (
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <Link to="/transactions" className="btn btn-outline">
+                View All Transactions →
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </div>
