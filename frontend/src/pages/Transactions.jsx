@@ -214,7 +214,8 @@ const Transactions = () => {
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         marginBottom: '1.5rem',
-        gap: '1rem'
+        gap: '1rem',
+        flexWrap: 'wrap'
       }}>
         <div style={{ flex: '1', minWidth: 0 }}>
           <h1 style={{ fontSize: '1.875rem', marginBottom: '0.375rem', fontWeight: '700' }}>Transactions</h1>
@@ -248,9 +249,9 @@ const Transactions = () => {
 
       {/* Compact Toolbar - Search, Sort, Pagination, Filters Toggle */}
       <div className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
           {/* Search */}
-          <div style={{ flex: '1', minWidth: '240px' }}>
+          <div style={{ flex: '1 1 100%', minWidth: '200px' }}>
             <input
               type="text"
               placeholder="🔍 Search by description or category..."
@@ -266,7 +267,7 @@ const Transactions = () => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="form-select"
-            style={{ minWidth: '160px', padding: '0.75rem 1rem', fontSize: '0.875rem' }}
+            style={{ flex: '1 1 auto', minWidth: '140px', padding: '0.75rem 1rem', fontSize: '0.875rem' }}
           >
             <option value="date-desc">📅 Newest First</option>
             <option value="date-asc">📅 Oldest First</option>
@@ -283,7 +284,7 @@ const Transactions = () => {
               setCurrentPage(1);
             }}
             className="form-select"
-            style={{ minWidth: '140px', padding: '0.75rem 1rem', fontSize: '0.875rem' }}
+            style={{ flex: '1 1 auto', minWidth: '120px', padding: '0.75rem 1rem', fontSize: '0.875rem' }}
           >
             <option value="10">📄 10 per page</option>
             <option value="25">📄 25 per page</option>
@@ -295,7 +296,7 @@ const Transactions = () => {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="btn btn-outline"
-            style={{ padding: '0.75rem 1.25rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }}
+            style={{ flex: '0 0 auto', padding: '0.75rem 1rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }}
           >
             {showFilters ? '🔽 Hide Filters' : '🔼 Show Filters'} {hasActiveFilters && '•'}
           </button>
