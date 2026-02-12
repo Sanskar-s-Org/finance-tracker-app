@@ -633,8 +633,9 @@ const Dashboard = () => {
             <span className="section-header-meta">Last {summary.recentTransactions.length} activities</span>
           </div>
 
-          <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-            <table className="data-table">
+          {/* Desktop Table View */}
+          <div className="card transactions-table-wrapper" style={{ padding: '0', overflow: 'hidden' }}>
+            <table className="data-table transactions-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -686,6 +687,43 @@ const Dashboard = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="transactions-mobile-cards">
+            {summary.recentTransactions.slice(0, 10).map((transaction) => (
+              <div key={transaction._id} className="transaction-mobile-card">
+                <div className="transaction-mobile-header">
+                  <div className="transaction-mobile-category">
+                    <span className="transaction-icon">{transaction.category.icon}</span>
+                    <div>
+                      <div className="transaction-description">
+                        {transaction.description || transaction.category.name}
+                      </div>
+                      <div className="transaction-category-name">{transaction.category.name}</div>
+                    </div>
+                  </div>
+                  <div className="transaction-mobile-amount" style={{
+                    color: transaction.type === 'income' ? 'var(--success)' : 'var(--danger)',
+                  }}>
+                    {transaction.type === 'income' ? '+' : '-'}
+                    {formatCurrency(transaction.amount)}
+                  </div>
+                </div>
+                <div className="transaction-mobile-footer">
+                  <span className="transaction-date">
+                    {new Date(transaction.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </span>
+                  <span className={`status-badge ${transaction.type}`}>
+                    {transaction.type}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
 
           {summary.recentTransactions.length > 10 && (

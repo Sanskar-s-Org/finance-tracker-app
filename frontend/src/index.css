@@ -1164,6 +1164,103 @@ input[type="checkbox"] {
   }
 }
 
+/* ==================== TRANSACTIONS MOBILE CARDS ==================== */
+/* Hide mobile cards by default, show on mobile */
+.transactions-mobile-cards {
+  display: none;
+}
+
+/* Show desktop table by default */
+.transactions-table-wrapper {
+  display: block;
+}
+
+/* Mobile responsive for transactions */
+@media (max-width: 768px) {
+  /* Hide desktop table */
+  .transactions-table-wrapper {
+    display: none;
+  }
+
+  /* Show mobile cards */
+  .transactions-mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .transaction-mobile-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    transition: all var(--transition-base);
+  }
+
+  .transaction-mobile-card:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .transaction-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .transaction-mobile-category {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .transaction-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .transaction-description {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    word-wrap: break-word;
+  }
+
+  .transaction-category-name {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .transaction-mobile-amount {
+    font-weight: 800;
+    font-size: 1.125rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .transaction-mobile-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .transaction-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+}
+
 /* Large screens */
 @media (min-width: 1440px) {
   .container {
