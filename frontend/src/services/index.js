@@ -79,8 +79,12 @@ export const budgetService = {
 };
 
 export const dashboardService = {
-  getSummary: async (period = 'thisMonth') => {
-    const response = await api.get(`/dashboard/summary?period=${period}`);
+  getSummary: async (period = 'thisMonth', startDate = null, endDate = null) => {
+    let url = `/dashboard/summary?period=${period}`;
+    if (period === 'custom' && startDate && endDate) {
+      url += `&startDate=${startDate}&endDate=${endDate}`;
+    }
+    const response = await api.get(url);
     return response.data;
   },
 

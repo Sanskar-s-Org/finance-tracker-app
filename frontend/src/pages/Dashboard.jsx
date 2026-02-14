@@ -52,14 +52,12 @@ const Dashboard = () => {
 
   const loadDashboard = async () => {
     try {
-      // For custom period, pass the date range
-      let summaryParam = period;
-      if (period === 'custom' && customDateRange.startDate && customDateRange.endDate) {
-        summaryParam = `custom&startDate=${customDateRange.startDate}&endDate=${customDateRange.endDate}`;
-      }
-
       const [summaryRes, trendsRes, insightsRes, alertsRes] = await Promise.all([
-        dashboardService.getSummary(summaryParam),
+        dashboardService.getSummary(
+          period,
+          customDateRange.startDate,
+          customDateRange.endDate
+        ),
         dashboardService.getTrends(6),
         dashboardService.getInsights(),
         budgetService.getAlerts(),

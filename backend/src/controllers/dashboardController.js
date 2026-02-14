@@ -7,7 +7,7 @@ import logger from '../config/logger.js';
 // @access  Private
 export const getDashboardSummary = async (req, res, next) => {
   try {
-    const { period = 'thisMonth' } = req.query;
+    const { period = 'thisMonth', startDate: customStart, endDate: customEnd } = req.query;
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
@@ -16,6 +16,18 @@ export const getDashboardSummary = async (req, res, next) => {
     let startDate, endDate;
 
     switch (period) {
+      case 'custom':
+        if (customStart && customEnd) {
+          startDate = new Date(customStart);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(customEnd);
+          endDate.setHours(23, 59, 59, 999);
+        } else {
+          // Fallback to this month if custom dates not provided
+          startDate = new Date(currentYear, currentMonth, 1);
+          endDate = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+        }
+        break;
       case 'lastMonth': {
         const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
         const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
