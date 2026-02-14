@@ -27,6 +27,7 @@ const Dashboard = () => {
     last3Months: 'Last 3 Months',
     thisYear: 'This Year',
     allTime: 'All Time',
+    custom: 'Custom Range',
   };
 
   useEffect(() => {
@@ -51,8 +52,14 @@ const Dashboard = () => {
 
   const loadDashboard = async () => {
     try {
+      // For custom period, pass the date range
+      let summaryParam = period;
+      if (period === 'custom' && customDateRange.startDate && customDateRange.endDate) {
+        summaryParam = `custom&startDate=${customDateRange.startDate}&endDate=${customDateRange.endDate}`;
+      }
+
       const [summaryRes, trendsRes, insightsRes, alertsRes] = await Promise.all([
-        dashboardService.getSummary(period),
+        dashboardService.getSummary(summaryParam),
         dashboardService.getTrends(6),
         dashboardService.getInsights(),
         budgetService.getAlerts(),
@@ -189,7 +196,7 @@ const Dashboard = () => {
                 }}
               />
               <button
-                onClick={() => period === 'custom' && customDateRange.startDate && customDateRange.endDate && loadDashboard()}
+                onClick={loadDashboard}
                 className="btn btn-primary"
                 style={{ padding: '0.75rem 1.25rem', fontSize: '0.875rem' }}
                 disabled={!customDateRange.startDate || !customDateRange.endDate}

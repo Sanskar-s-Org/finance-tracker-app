@@ -488,3 +488,534 @@ pre code {
 .z-toast {
     z-index: 1200;
 }
+
+/* ========================================
+   MOBILE RESPONSIVE ENHANCEMENTS
+   ======================================== */
+
+/* Dashboard & Page Headers Responsive */
+@media (max-width: 768px) {
+    /* Dashboard Filter Controls */
+    .form-select,
+    .form-input {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100%;
+    }
+
+    /* Analytics Grid */
+    .analytics-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Compact Stats */
+    .compact-stat {
+        padding: 0.75rem;
+    }
+
+    /* Section Headers */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+
+    .section-header-meta {
+        font-size: 0.75rem;
+    }
+
+    /* Page Titles */
+    h1 {
+        font-size: 1.5rem !important;
+    }
+
+    h2 {
+        font-size: 1.375rem !important;
+    }
+
+    h3 {
+        font-size: 1.125rem !important;
+    }
+}
+
+/* Transaction Table Responsive */
+@media (max-width: 992px) {
+    .data-table {
+        font-size: 0.8125rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.625rem 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Hide desktop table, show mobile cards */
+    .transactions-table-wrapper {
+        display: none;
+    }
+
+    .transactions-mobile-cards {
+        display: block !important;
+    }
+
+    /* Mobile Transaction Cards */
+    .transaction-mobile-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all var(--transition-base);
+    }
+
+    .transaction-mobile-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .transaction-mobile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .transaction-mobile-category {
+        display: flex;
+        gap: 0.625rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .transaction-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .transaction-description {
+        font-weight: 600;
+        font-size: 0.9375rem;
+        margin-bottom: 0.25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .transaction-category-name {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .transaction-mobile-amount {
+        font-weight: 800;
+        font-size: 1rem;
+        flex-shrink: 0;
+        margin-left: 0.5rem;
+    }
+
+    .transaction-mobile-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .transaction-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Hide table by default */
+    .data-table {
+        display: none;
+    }
+
+    /* Form Grid Responsive */
+    .grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Pagination Responsive */
+    .card > div {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+
+    /* Stat Cards on Mobile */
+    .stat-card {
+        padding: 1rem !important;
+    }
+
+    .stat-card h2 {
+        font-size: 1.5rem !important;
+    }
+
+    .stat-card-icon {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    /* Quick Actions on Mobile */
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.625rem 1rem;
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 var(--spacing-md) !important;
+    }
+
+    .card {
+        padding: var(--spacing-md) !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Stat Cards More Compact */
+    .stat-card-content {
+        flex-direction: column;
+    }
+
+    .stat-card h2 {
+        font-size: 1.375rem !important;
+    }
+
+    /* Buttons Full Width on Small Screens */
+    .btn:not(.btn-inline) {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Pagination Controls Simplified */
+    .pagination-controls {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .pagination-controls > div:first-child {
+        text-align: center;
+        width: 100%;
+    }
+
+    .pagination-controls > div:last-child {
+        width: 100%;
+    }
+
+    .pagination-controls button {
+        padding: 0.5rem !important;
+        font-size: 0.75rem !important;
+        flex: 1;
+    }
+
+    /* Hide "First" and "Last" pagination buttons on very small screens */
+    .pagination-controls button:first-of-type,
+    .pagination-controls button:last-of-type {
+        display: none !important;
+    }
+
+    /* Form Inputs */
+    input,
+    select,
+    textarea {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+    }
+
+    /* Transaction Amount Smaller */
+    .transaction-mobile-amount {
+        font-size: 0.9375rem !important;
+    }
+
+    /* Status Badges Smaller */
+    .status-badge {
+        font-size: 0.6875rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* Header Adjustments */
+    h1 {
+        font-size: 1.375rem !important;
+    }
+
+    h2 {
+        font-size: 1.25rem !important;
+    }
+
+    h3 {
+        font-size: 1rem !important;
+    }
+}
+
+/* Desktop: Show table, hide mobile cards */
+@media (min-width: 769px) {
+    .transactions-mobile-cards {
+        display: none;
+    }
+
+    .transactions-table-wrapper {
+        display: block;
+    }
+}
+
+/* Fix for Flex Wrapping on Mobile */
+@media (max-width: 768px) {
+    [style*="display: flex"] {
+        flex-wrap: wrap;
+    }
+
+    /* Override inline flex styles for better mobile */
+    div[style*="display: flex"][style*="gap"] {
+        gap: 0.5rem !important;
+    }
+
+    /* Flex Spacers Should Collapse on Mobile */
+    div[style*="flex: 1"][style*="flex: '1'"] {
+        display: none;
+    }
+}
+
+/* Donut Chart Responsive */
+@media (max-width: 768px) {
+    .donut-chart-container {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .donut-chart-legend {
+        font-size: 0.8125rem;
+    }
+}
+
+/* Progress Bars Responsive */
+@media (max-width: 640px) {
+    .progress-bar {
+        height: 6px;
+    }
+
+    .percentage-badge {
+        font-size: 0.6875rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Budget Alerts Grid Responsive */
+@media (max-width: 768px) {
+    .grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Navbar Responsive - Already handled in Navbar.jsx but adding fallback */
+@media (max-width: 768px) {
+    nav {
+        padding: 0 var(--spacing-md);
+    }
+
+    .navbar-brand {
+        font-size: 1.125rem !important;
+    }
+
+    .nav-link {
+        font-size: 0.875rem;
+    }
+}
+
+/* Tooltip Adjustments for Mobile */
+@media (max-width: 768px) {
+    [data-tooltip]::after {
+        display: none; /* Hide tooltips on mobile to prevent clutter */
+    }
+}
+
+/* Improve Touch Targets */
+@media (hover: none) and (pointer: coarse) {
+    button,
+    a,
+    .btn,
+    select,
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .data-table td button {
+        min-height: 40px;
+        min-width: 40px;
+    }
+}
+
+/* Loading Skeleton Responsive */
+@media (max-width: 768px) {
+    .loading-skeleton {
+        height: 100px !important;
+    }
+}
+
+/* Chart Legends on Mobile */
+@media (max-width: 480px) {
+    .chart-legend-item {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+    }
+}
+
+/* Fix overflow issues on mobile */
+@media (max-width: 768px) {
+    * {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+
+    .card,
+    .stat-card {
+        overflow: hidden;
+    }
+}
+
+/* Ensure proper spacing in mobile view */
+@media (max-width: 640px) {
+    /* Reduce vertical spacing */
+    .mb-2,
+    [style*="marginBottom: '1.5rem'"] {
+        margin-bottom: 1rem !important;
+    }
+
+    /* Compact padding for containers */
+    .container[style*="paddingTop"] {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    /* Form labels */
+    .form-label {
+        font-size: 0.8125rem;
+        margin-bottom: 0.375rem;
+    }
+
+    /* Form groups */
+    .form-group {
+        margin-bottom: 0.875rem;
+    }
+}
+
+/* Tablet Responsive (Portrait) */
+@media (max-width: 992px) and (min-width: 769px) {
+    .grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid-3 > *:last-child:nth-child(odd) {
+        grid-column: span 2;
+    }
+}
+
+/* Better scroll for tables */
+@media (max-width: 1200px) {
+    .data-table {
+        min-width: 800px;
+    }
+
+    .card > div[style*="overflowX"] {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Responsive utilities */
+.mobile-only {
+    display: none !important;
+}
+
+.desktop-only {
+    display: block !important;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block !important;
+    }
+
+    .desktop-only {
+        display: none !important;
+    }
+
+    .mobile-flex {
+        display: flex !important;
+    }
+}
+
+/* Fix button groups on mobile */
+@media (max-width: 640px) {
+    .btn-group {
+        flex-direction: column !important;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        width: 100%;
+        border-radius: var(--radius-md) !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-group .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Improve modal/dialog responsiveness */
+@media (max-width: 640px) {
+    .modal,
+    .dialog {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 0.5rem !important;
+    }
+}
+
+/* Better spacing for action buttons in cards */
+@media (max-width: 768px) {
+    .card-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .card-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Enhanced filter controls responsive */
+@media (max-width: 640px) {
+    .filter-controls {
+        flex-direction: column !important;
+    }
+
+    .filter-controls > * {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+}
+
+/* Better empty states on mobile */
+@media (max-width: 640px) {
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+
+    .empty-state-title {
+        font-size: 1.125rem;
+    }
+
+    .empty-state-description {
+        font-size: 0.875rem;
+    }
+}

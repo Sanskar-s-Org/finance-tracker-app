@@ -537,117 +537,195 @@ const Transactions = () => {
           )}
         </div>
       ) : (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th style={{ width: '110px' }}>Date</th>
-                  <th>Description</th>
-                  <th style={{ width: '200px' }}>Category</th>
-                  <th style={{ width: '120px' }}>Payment</th>
-                  <th style={{ width: '100px' }}>Type</th>
-                  <th style={{ width: '140px', textAlign: 'right' }}>Amount</th>
-                  <th style={{ width: '100px', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedTransactions.map(transaction => (
-                  <tr key={transaction._id}>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: '500' }}>
+        <>
+          {/* Desktop Table View */}
+          <div className="card transactions-table-wrapper" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '110px' }}>Date</th>
+                    <th>Description</th>
+                    <th style={{ width: '200px' }}>Category</th>
+                    <th style={{ width: '120px' }}>Payment</th>
+                    <th style={{ width: '100px' }}>Type</th>
+                    <th style={{ width: '140px', textAlign: 'right' }}>Amount</th>
+                    <th style={{ width: '100px', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedTransactions.map(transaction => (
+                    <tr key={transaction._id}>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: '500' }}>
+                        {new Date(transaction.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: '600', fontSize: '0.9375rem' }}>
+                          {transaction.description || transaction.category.name}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.25rem' }}>{transaction.category.icon}</span>
+                          <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{transaction.category.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                        {transaction.paymentMethod.replace('_', ' ')}
+                      </td>
+                      <td>
+                        <span className={`status-badge ${transaction.type}`}>
+                          {transaction.type}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span
+                          style={{
+                            fontWeight: '800',
+                            fontSize: '1rem',
+                            color: transaction.type === 'income' ? 'var(--success)' : 'var(--danger)',
+                          }}
+                        >
+                          {transaction.type === 'income' ? '+' : '-'}
+                          {formatCurrency(transaction.amount)}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <button
+                            onClick={() => handleEdit(transaction)}
+                            className="btn btn-primary"
+                            style={{
+                              padding: '0.5rem',
+                              fontSize: '1rem',
+                              minWidth: 'auto',
+                              width: '36px',
+                              height: '36px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: 'var(--radius-md)'
+                            }}
+                            title="Edit transaction"
+                          >
+                            ✎
+                          </button>
+                          <button
+                            onClick={() => handleDelete(transaction._id)}
+                            className="btn btn-danger"
+                            style={{
+                              padding: '0.5rem',
+                              fontSize: '1.125rem',
+                              minWidth: 'auto',
+                              width: '36px',
+                              height: '36px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: 'var(--radius-md)'
+                            }}
+                            title="Delete transaction"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="transactions-mobile-cards">
+            {paginatedTransactions.map(transaction => (
+              <div key={transaction._id} className="transaction-mobile-card">
+                <div className="transaction-mobile-header">
+                  <div className="transaction-mobile-category">
+                    <span className="transaction-icon">{transaction.category.icon}</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="transaction-description">
+                        {transaction.description || transaction.category.name}
+                      </div>
+                      <div className="transaction-category-name">{transaction.category.name}</div>
+                    </div>
+                  </div>
+                  <div className="transaction-mobile-amount" style={{
+                    color: transaction.type === 'income' ? 'var(--success)' : 'var(--danger)',
+                  }}>
+                    {transaction.type === 'income' ? '+' : '-'}
+                    {formatCurrency(transaction.amount)}
+                  </div>
+                </div>
+                <div className="transaction-mobile-footer">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="transaction-date">
                       {new Date(transaction.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: '600', fontSize: '0.9375rem' }}>
-                        {transaction.description || transaction.category.name}
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1.25rem' }}>{transaction.category.icon}</span>
-                        <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{transaction.category.name}</span>
-                      </div>
-                    </td>
-                    <td style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-                      {transaction.paymentMethod.replace('_', ' ')}
-                    </td>
-                    <td>
-                      <span className={`status-badge ${transaction.type}`}>
-                        {transaction.type}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <span
-                        style={{
-                          fontWeight: '800',
-                          fontSize: '1rem',
-                          color: transaction.type === 'income' ? 'var(--success)' : 'var(--danger)',
-                        }}
-                      >
-                        {transaction.type === 'income' ? '+' : '-'}
-                        {formatCurrency(transaction.amount)}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        <button
-                          onClick={() => handleEdit(transaction)}
-                          className="btn btn-primary"
-                          style={{
-                            padding: '0.5rem',
-                            fontSize: '1rem',
-                            minWidth: 'auto',
-                            width: '36px',
-                            height: '36px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: 'var(--radius-md)'
-                          }}
-                          title="Edit transaction"
-                        >
-                          ✎
-                        </button>
-                        <button
-                          onClick={() => handleDelete(transaction._id)}
-                          className="btn btn-danger"
-                          style={{
-                            padding: '0.5rem',
-                            fontSize: '1.125rem',
-                            minWidth: 'auto',
-                            width: '36px',
-                            height: '36px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: 'var(--radius-md)'
-                          }}
-                          title="Delete transaction"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                    <span className={`status-badge ${transaction.type}`}>
+                      {transaction.type}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => handleEdit(transaction)}
+                      className="btn btn-primary"
+                      style={{
+                        padding: '0.5rem',
+                        fontSize: '0.875rem',
+                        minWidth: 'auto',
+                        width: '36px',
+                        height: '36px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      title="Edit"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={() => handleDelete(transaction._id)}
+                      className="btn btn-danger"
+                      style={{
+                        padding: '0.5rem',
+                        fontSize: '1rem',
+                        minWidth: 'auto',
+                        width: '36px',
+                        height: '36px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      title="Delete"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        </>
       )}
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="card" style={{ padding: '1rem', marginTop: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
               Showing {startIndex + 1}-{Math.min(endIndex, totalTransactions)} of {totalTransactions} transactions
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
