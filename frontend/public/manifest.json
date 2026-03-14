@@ -58,6 +58,15 @@
     }
   ],
   "categories": ["finance", "productivity", "business"],
+  "share_target": {
+    "action": "/transactions",
+    "method": "GET",
+    "params": {
+      "text": "shared_text",
+      "title": "shared_title",
+      "url": "shared_url"
+    }
+  },
   "screenshots": [
     {
       "src": "/screenshots/dashboard.png",

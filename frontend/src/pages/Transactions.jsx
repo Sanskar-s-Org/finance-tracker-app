@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../context/AuthContext';
+import { parsePaymentReceipt } from '../utils/parsePaymentReceipt';
 
 const Icons = {
   edit: (
@@ -69,9 +71,12 @@ const Transactions = () => {
     deleteTransaction,
   } = useFinance();
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [sharedBanner, setSharedBanner] = useState(null); // { merchant, amount, categoryHint }
   const confirmRef = useRef(null);
   const [formData, setFormData] = useState({
     type: 'expense',
@@ -98,6 +103,47 @@ const Transactions = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // ── Detect shared receipt from Web Share Target ──────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const sharedText = params.get('shared_text') || params.get('text') || '';
+    if (!sharedText) return;
+
+    const parsed = parsePaymentReceipt(sharedText);
+
+    // Strip the query param from the URL without adding a history entry
+    navigate('/transactions', { replace: true });
+
+    // We need categories to be loaded before we can match categoryHint.
+    // Store parsed result; the category-matching runs once categories arrive.
+    setSharedBanner(parsed);
+  }, [location.search]);
+
+  // Once categories are loaded, apply the shared receipt to the form
+  useEffect(() => {
+    if (!sharedBanner || categories.length === 0) return;
+
+    const { amount, description, paymentMethod, categoryHint } = sharedBanner;
+
+    // Try to find a matching category from the real list
+    const matchedCat = categories.find(c => {
+      if (!categoryHint) return false;
+      return c.name.toLowerCase().includes(categoryHint.toLowerCase()) ||
+             categoryHint.toLowerCase().includes(c.name.toLowerCase());
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      type: 'expense',
+      amount: amount || '',
+      category: matchedCat?._id || '',
+      description: description || '',
+      paymentMethod: paymentMethod || 'upi',
+      date: new Date().toISOString().split('T')[0],
+    }));
+    setShowForm(true);
+  }, [sharedBanner, categories]);
 
   const loadData = async () => {
     try {
@@ -320,6 +366,29 @@ const Transactions = () => {
           {showForm ? <>{Icons.close} Cancel</> : <>{Icons.plus} Add Transaction</>}
         </button>
       </div>
+
+      {/* ── Shared receipt banner ── */}
+      {sharedBanner && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: '0.75rem', padding: '0.75rem 1rem', marginBottom: '0.75rem',
+          background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.30)',
+          borderRadius: 'var(--radius-lg)', fontSize: '0.875rem', fontWeight: 500, color: '#6ee7b7',
+        }}>
+          <span>
+            ✅ Receipt parsed{sharedBanner.merchant ? ` — ${sharedBanner.merchant}` : ''}.
+            {' '}Review the form below and save.
+          </span>
+          <button
+            onClick={() => setSharedBanner(null)}
+            className="icon-btn"
+            style={{ color: '#6ee7b7', flexShrink: 0 }}
+            aria-label="Dismiss"
+          >
+            {Icons.close}
+          </button>
+        </div>
+      )}
 
       {/* ── Toolbar ── */}
       <div className="card" style={{ padding: '0.875rem 1rem', marginBottom: '1rem' }}>
