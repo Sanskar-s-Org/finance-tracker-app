@@ -89,8 +89,10 @@ export const exportReportPDF = async (req, res) => {
     // Generate HTML report that can be printed to PDF
     const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Financial Report</title>
   <style>
     @media print {
