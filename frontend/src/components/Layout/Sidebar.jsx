@@ -238,6 +238,8 @@ export const MobileTopBar = ({ onMenuOpen, title }) => {
   const { user } = useAuth();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+  const [isInstallVisible, setIsInstallVisible] = useState(false);
   const activeLink = NAV_LINKS.find((link) => location.pathname === link.to);
   const userInitials = getUserInitials(user?.name);
   const currentTitle = title || activeLink?.label || 'FinTracker';
@@ -248,6 +250,35 @@ export const MobileTopBar = ({ onMenuOpen, title }) => {
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      setDeferredInstallPrompt(event);
+      setIsInstallVisible(true);
+    };
+
+    const onAppInstalled = () => {
+      setDeferredInstallPrompt(null);
+      setIsInstallVisible(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('appinstalled', onAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', onAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    setDeferredInstallPrompt(null);
+    setIsInstallVisible(false);
+  };
 
   return (
     <header
@@ -279,7 +310,13 @@ export const MobileTopBar = ({ onMenuOpen, title }) => {
         </div>
       </div>
       <div className="mobile-topbar-actions">
-        <span className="mobile-topbar-chip">Live</span>
+        {isInstallVisible ? (
+          <button className="mobile-topbar-install-btn" onClick={handleInstallClick}>
+            Install App
+          </button>
+        ) : (
+          <span className="mobile-topbar-chip">Live</span>
+        )}
         <div className="mobile-topbar-avatar" title={user?.name || 'Account'}>
           {userInitials || Icon.user}
         </div>

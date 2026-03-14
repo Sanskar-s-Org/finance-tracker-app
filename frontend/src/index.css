@@ -1741,6 +1741,27 @@ input[type="checkbox"] {
   border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
+.mobile-topbar-install-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem 0.62rem;
+  border-radius: var(--radius-full);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: white;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.92));
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.28);
+  cursor: pointer;
+}
+
+.mobile-topbar-install-btn:active {
+  transform: scale(0.98);
+}
+
 .mobile-topbar-avatar {
   width: 38px;
   height: 38px;
