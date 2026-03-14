@@ -176,35 +176,37 @@ const Dashboard = () => {
     expense: item.expense || 0,
     balance: item.balance || 0,
   }));
-  const hasTrendData = trendSeries.length > 0;
+  const activeTrendSeries = trendSeries.filter((item) => item.income !== 0 || item.expense !== 0 || item.balance !== 0);
+  const hasTrendData = activeTrendSeries.length > 0;
+  const hasComparableTrendData = activeTrendSeries.length >= 2;
 
-  const latestTrend = trendSeries[trendSeries.length - 1] || { income: 0, expense: 0, balance: 0 };
-  const previousTrend = trendSeries[trendSeries.length - 2] || latestTrend;
+  const latestTrend = activeTrendSeries[activeTrendSeries.length - 1] || { income: 0, expense: 0, balance: 0 };
+  const previousTrend = activeTrendSeries[activeTrendSeries.length - 2] || null;
 
   const getPercentDelta = (current, previous) => {
-    if (!previous) {
-      return 0;
+    if (previous === null || previous === undefined) {
+      return null;
     }
 
     if (previous === 0) {
-      return current > 0 ? 100 : 0;
+      return null;
     }
 
     return ((current - previous) / previous) * 100;
   };
 
-  const incomeDelta = getPercentDelta(latestTrend.income, previousTrend.income);
-  const expenseDelta = getPercentDelta(latestTrend.expense, previousTrend.expense);
-  const balanceDelta = getPercentDelta(latestTrend.balance, previousTrend.balance);
-  const changePercentage = insights?.changePercentage || 0;
+  const incomeDelta = getPercentDelta(latestTrend.income, previousTrend?.income);
+  const expenseDelta = getPercentDelta(latestTrend.expense, previousTrend?.expense);
+  const balanceDelta = getPercentDelta(latestTrend.balance, previousTrend?.balance);
+  const hasExpenseShift = hasComparableTrendData && expenseDelta !== null;
 
-  const totalTrendIncome = trendSeries.reduce((sum, item) => sum + item.income, 0);
-  const totalTrendExpense = trendSeries.reduce((sum, item) => sum + item.expense, 0);
-  const avgIncome = trendSeries.length ? totalTrendIncome / trendSeries.length : 0;
-  const avgExpense = trendSeries.length ? totalTrendExpense / trendSeries.length : 0;
-  const strongestMonth = trendSeries.reduce(
+  const totalTrendIncome = activeTrendSeries.reduce((sum, item) => sum + item.income, 0);
+  const totalTrendExpense = activeTrendSeries.reduce((sum, item) => sum + item.expense, 0);
+  const avgIncome = activeTrendSeries.length ? totalTrendIncome / activeTrendSeries.length : 0;
+  const avgExpense = activeTrendSeries.length ? totalTrendExpense / activeTrendSeries.length : 0;
+  const strongestMonth = activeTrendSeries.reduce(
     (best, item) => (item.balance > best.balance ? item : best),
-    trendSeries[0] || { month: PERIOD_LABELS[period], balance },
+    activeTrendSeries[0] || { month: PERIOD_LABELS[period], balance },
   );
 
   const expenseChartData =
@@ -238,16 +240,18 @@ const Dashboard = () => {
     },
     {
       title: 'Expense shift',
-      value: hasTrendData
-        ? `${Math.abs(changePercentage).toFixed(1)}% ${changePercentage <= 0 ? 'lower' : 'higher'}`
+      value: hasExpenseShift
+        ? `${Math.abs(expenseDelta).toFixed(1)}% ${expenseDelta <= 0 ? 'lower' : 'higher'}`
         : 'Waiting for monthly baseline',
-      detail: hasTrendData
-        ? (changePercentage <= 0 ? 'Month-over-month burn is improving' : 'Monthly outflow is rising')
-        : 'Add transactions over multiple months to unlock this signal',
-      icon: hasTrendData
-        ? (changePercentage <= 0 ? ICONS.arrowDownRight : ICONS.arrowUpRight)
+      detail: hasExpenseShift
+        ? (expenseDelta <= 0 ? 'Month-over-month outflow is easing' : 'Month-over-month outflow is rising')
+        : (activeTrendSeries.length === 1
+            ? 'Need one more active month to compare spending movement'
+            : 'Add transactions over multiple months to unlock this signal'),
+      icon: hasExpenseShift
+        ? (expenseDelta <= 0 ? ICONS.arrowDownRight : ICONS.arrowUpRight)
         : ICONS.pulse,
-      tone: hasTrendData ? (changePercentage <= 0 ? 'positive' : 'warning') : 'neutral',
+      tone: hasExpenseShift ? (expenseDelta <= 0 ? 'positive' : 'warning') : 'neutral',
     },
   ];
 
@@ -258,8 +262,10 @@ const Dashboard = () => {
       tone: 'positive',
       icon: ICONS.income,
       trendLabel: hasTrendData
-        ? `${incomeDelta >= 0 ? '+' : ''}${incomeDelta.toFixed(1)}% vs prior month`
-        : 'No monthly trend data yet',
+        ? (incomeDelta !== null
+            ? `${incomeDelta >= 0 ? '+' : ''}${incomeDelta.toFixed(1)}% vs prior month`
+            : 'Prior month income baseline is zero')
+        : 'Need two active months for trend',
       chart: trends.map((item) => item.income || 0),
       chartColor: '#10b981',
     },
@@ -269,8 +275,10 @@ const Dashboard = () => {
       tone: 'danger',
       icon: ICONS.expense,
       trendLabel: hasTrendData
-        ? `${expenseDelta >= 0 ? '+' : ''}${expenseDelta.toFixed(1)}% vs prior month`
-        : 'No monthly trend data yet',
+        ? (expenseDelta !== null
+            ? `${expenseDelta >= 0 ? '+' : ''}${expenseDelta.toFixed(1)}% vs prior month`
+            : 'Prior month expense baseline is zero')
+        : 'Need two active months for trend',
       chart: trends.map((item) => item.expense || 0),
       chartColor: '#ef4444',
     },
@@ -280,8 +288,10 @@ const Dashboard = () => {
       tone: balance >= 0 ? 'positive' : 'danger',
       icon: ICONS.balance,
       trendLabel: hasTrendData
-        ? `${balanceDelta >= 0 ? '+' : ''}${balanceDelta.toFixed(1)}% balance swing`
-        : 'No monthly trend data yet',
+        ? (balanceDelta !== null
+            ? `${balanceDelta >= 0 ? '+' : ''}${balanceDelta.toFixed(1)}% balance swing`
+            : 'Prior month balance baseline is zero')
+        : 'Need two active months for trend',
       chart: trends.map((item) => item.balance || 0),
       chartColor: balance >= 0 ? '#22c55e' : '#f97316',
     },
@@ -299,20 +309,20 @@ const Dashboard = () => {
   const signalCards = [
     {
       title: 'Average monthly income',
-      value: hasTrendData ? formatCurrency(avgIncome) : 'Not enough data yet',
-      supporting: hasTrendData ? 'Six-month average inflow' : 'Track monthly income to see this metric',
+      value: activeTrendSeries.length > 0 ? formatCurrency(avgIncome) : 'Not enough data yet',
+      supporting: activeTrendSeries.length > 0 ? 'Average across active months' : 'Track monthly income to see this metric',
       icon: ICONS.spark,
     },
     {
       title: 'Average monthly expense',
-      value: hasTrendData ? formatCurrency(avgExpense) : 'Not enough data yet',
-      supporting: hasTrendData ? 'Six-month average outflow' : 'Track monthly expenses to see this metric',
+      value: activeTrendSeries.length > 0 ? formatCurrency(avgExpense) : 'Not enough data yet',
+      supporting: activeTrendSeries.length > 0 ? 'Average across active months' : 'Track monthly expenses to see this metric',
       icon: ICONS.pulse,
     },
     {
       title: 'Strongest month',
-      value: hasTrendData ? strongestMonth?.month : 'Not enough data yet',
-      supporting: hasTrendData ? formatCurrency(strongestMonth?.balance || 0) : 'Compare multiple months to rank performance',
+      value: activeTrendSeries.length > 0 ? strongestMonth?.month : 'Not enough data yet',
+      supporting: activeTrendSeries.length > 0 ? formatCurrency(strongestMonth?.balance || 0) : 'Compare multiple months to rank performance',
       icon: ICONS.target,
     },
   ];

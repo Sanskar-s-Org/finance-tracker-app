@@ -1301,6 +1301,10 @@ pre code {
     opacity: 0.72;
 }
 
+.dashboard-stat-trendchart svg {
+    max-width: 100%;
+}
+
 .dashboard-chart-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
@@ -1506,6 +1510,10 @@ pre code {
 
 @media (max-width: 900px) {
     .dashboard-hero-content {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-kpi-grid {
         grid-template-columns: 1fr;
     }
 
