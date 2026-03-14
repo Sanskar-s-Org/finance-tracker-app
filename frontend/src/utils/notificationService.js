@@ -62,7 +62,7 @@ class NotificationService {
 
         if (isOverBudget) {
             this.showNotification(
-                `⚠️ Budget Exceeded!`,
+                `Budget Exceeded`,
                 {
                     body: `You've exceeded your ${category.name} budget by ${percentageUsed - 100}%`,
                     tag: `budget-${budget._id}`,
@@ -72,7 +72,7 @@ class NotificationService {
             );
         } else if (percentageUsed >= 80) {
             this.showNotification(
-                `⚡ Budget Warning`,
+                `Budget Warning`,
                 {
                     body: `You've used ${percentageUsed}% of your ${category.name} budget`,
                     tag: `budget-${budget._id}`,

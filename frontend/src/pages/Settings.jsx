@@ -5,9 +5,13 @@ import api from '../services/api';
 
 const Settings = () => {
     const { user, updateUser, logout } = useAuth();
-    const { showSuccess, showError, showWarning } = useNotification();
+    const { showSuccess, showError } = useNotification();
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [showCurrentPw, setShowCurrentPw] = useState(false);
+    const [showNewPw, setShowNewPw] = useState(false);
 
     const [profileData, setProfileData] = useState({
         name: '',
@@ -105,24 +109,7 @@ const Settings = () => {
     };
 
     const handleDeleteAccount = async () => {
-        const confirmed = window.confirm(
-            'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.'
-        );
-
-        if (!confirmed) return;
-
-        const doubleConfirm = window.confirm(
-            'This is your last chance! Type DELETE in the next prompt to confirm account deletion.'
-        );
-
-        if (!doubleConfirm) return;
-
-        const finalConfirm = prompt('Type DELETE to confirm:');
-        if (finalConfirm !== 'DELETE') {
-            showWarning('Account deletion cancelled');
-            return;
-        }
-
+        if (deleteConfirmText !== 'DELETE') return;
         setLoading(true);
         try {
             await api.delete('/settings/account');
@@ -132,64 +119,62 @@ const Settings = () => {
             showError(error.response?.data?.message || 'Failed to delete account');
         } finally {
             setLoading(false);
+            setShowDeleteConfirm(false);
+            setDeleteConfirmText('');
         }
     };
 
+    const EyeIcon = ({ open }) => open ? (
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+    ) : (
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+    );
+
     const tabs = [
-        { id: 'profile', label: '👤 Profile', icon: '👤' },
-        { id: 'password', label: '🔒 Password', icon: '🔒' },
-        { id: 'preferences', label: '⚙️ Preferences', icon: '⚙️' },
-        { id: 'danger', label: '⚠️ Danger Zone', icon: '⚠️' },
+        {
+            id: 'profile', label: 'Profile',
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+        },
+        {
+            id: 'password', label: 'Password',
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+        },
+        {
+            id: 'preferences', label: 'Preferences',
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>,
+        },
+        {
+            id: 'danger', label: 'Danger Zone', danger: true,
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+        },
     ];
 
     return (
         <div className="container" style={{ paddingTop: '1.25rem', paddingBottom: '2rem' }}>
 
-            <style>{`
-              .settings-toggle { display: none; }
-              .settings-toggle-track {
-                width: 44px; height: 24px; border-radius: 12px;
-                background: var(--bg-tertiary); border: 2px solid var(--border);
-                position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s;
-                flex-shrink: 0;
-              }
-              .settings-toggle:checked + .settings-toggle-track { background: var(--primary); border-color: var(--primary); }
-              .settings-toggle-track::after {
-                content: ''; position: absolute; top: 1px; left: 1px;
-                width: 18px; height: 18px; border-radius: 50%;
-                background: var(--text-secondary); transition: transform 0.2s, background 0.2s;
-              }
-              .settings-toggle:checked + .settings-toggle-track::after { transform: translateX(20px); background: #fff; }
-              .settings-tab-btn {
-                padding: 0.625rem 1.125rem; background: transparent; border: none;
-                border-bottom: 2px solid transparent; color: var(--text-secondary);
-                cursor: pointer; font-size: 0.9rem; font-weight: 500;
-                transition: var(--transition-base); white-space: nowrap;
-              }
-              .settings-tab-btn.active {
-                color: var(--text-primary); font-weight: 700;
-                border-bottom-color: var(--primary);
-              }
-              .settings-tab-btn:hover:not(.active) { color: var(--text-primary); }
-            `}</style>
-
             {/* ── Header ── */}
-            <div style={{ marginBottom: '1.5rem' }} className="fade-in">
-                <h1 style={{ marginBottom: '0.375rem', fontSize: '1.875rem', fontWeight: '700' }}>Settings</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+            <div style={{ marginBottom: '1.75rem' }} className="fade-in">
+                <h1 style={{ marginBottom: '0.375rem', fontSize: '1.875rem', fontWeight: '800', letterSpacing: '-0.02em' }}>Settings</h1>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
                     Manage your account, security, and preferences
                 </p>
             </div>
 
             {/* ── Tabs ── */}
-            <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+            <div className="settings-tab-bar" style={{ marginBottom: '1.5rem' }}>
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`settings-tab-btn${activeTab === tab.id ? ' active' : ''}`}
+                        className={`settings-tab-item${activeTab === tab.id ? ' active' : ''}${tab.danger ? ' danger-tab' : ''}`}
                     >
-                        {tab.label}
+                        {tab.icon}
+                        <span>{tab.label}</span>
                     </button>
                 ))}
             </div>
@@ -233,15 +218,27 @@ const Settings = () => {
                     <form onSubmit={handlePasswordUpdate}>
                         <div className="form-group">
                             <label className="form-label">Current Password</label>
-                            <input type="password" value={passwordData.currentPassword} onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })} className="form-input" required />
+                            <div className="password-field">
+                                <input type={showCurrentPw ? 'text' : 'password'} value={passwordData.currentPassword} onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })} className="form-input" required />
+                                <button type="button" className="password-toggle-btn" onClick={() => setShowCurrentPw(v => !v)} tabIndex={-1}>
+                                    <EyeIcon open={showCurrentPw} />
+                                </button>
+                            </div>
                         </div>
                         <div className="form-group">
                             <label className="form-label">New Password</label>
-                            <input type="password" value={passwordData.newPassword} onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })} className="form-input" required minLength={6} />
+                            <div className="password-field">
+                                <input type={showNewPw ? 'text' : 'password'} value={passwordData.newPassword} onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })} className="form-input" required minLength={6} />
+                                <button type="button" className="password-toggle-btn" onClick={() => setShowNewPw(v => !v)} tabIndex={-1}>
+                                    <EyeIcon open={showNewPw} />
+                                </button>
+                            </div>
                         </div>
                         <div className="form-group">
                             <label className="form-label">Confirm New Password</label>
-                            <input type="password" value={passwordData.confirmPassword} onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} className="form-input" required minLength={6} />
+                            <div className="password-field">
+                                <input type={showNewPw ? 'text' : 'password'} value={passwordData.confirmPassword} onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} className="form-input" required minLength={6} />
+                            </div>
                         </div>
                         <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '0.75rem 1.5rem' }}>
                             {loading ? 'Updating…' : 'Update Password'}
@@ -254,7 +251,6 @@ const Settings = () => {
             {activeTab === 'preferences' && (
                 <div className="card fade-in" style={{ padding: '1.5rem', maxWidth: '540px' }}>
                     <form onSubmit={handlePreferencesUpdate}>
-                        {/* Notifications section */}
                         <div style={{ marginBottom: '1.75rem' }}>
                             <div style={{ fontSize: '0.6875rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '1rem' }}>Notifications</div>
                             {[
@@ -274,8 +270,6 @@ const Settings = () => {
                                 </div>
                             ))}
                         </div>
-
-                        {/* Appearance section */}
                         <div style={{ marginBottom: '1.5rem' }}>
                             <div style={{ fontSize: '0.6875rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '1rem' }}>Appearance</div>
                             <div className="form-group" style={{ margin: 0 }}>
@@ -286,7 +280,6 @@ const Settings = () => {
                                 </select>
                             </div>
                         </div>
-
                         <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '0.75rem 1.5rem' }}>
                             {loading ? 'Saving…' : 'Save Preferences'}
                         </button>
@@ -296,16 +289,55 @@ const Settings = () => {
 
             {/* ── Danger Zone Tab ── */}
             {activeTab === 'danger' && (
-                <div className="card fade-in" style={{ padding: '1.5rem', maxWidth: '540px', borderColor: 'var(--danger)' }}>
+                <div className="card fade-in" style={{ padding: '1.5rem', maxWidth: '540px', borderColor: 'rgba(239,68,68,0.4)' }}>
                     <div style={{ fontSize: '0.6875rem', fontWeight: '700', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '1rem' }}>Danger Zone</div>
-                    <div style={{ padding: '1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ padding: '1.25rem', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 'var(--radius-md)' }}>
                         <h4 style={{ marginBottom: '0.5rem', color: 'var(--danger)', fontSize: '1.0625rem', fontWeight: '700' }}>Delete Account</h4>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.125rem', fontSize: '0.9rem', lineHeight: 1.6 }}>
                             Once you delete your account, there is no going back. All your transactions, budgets, and categories will be permanently erased.
                         </p>
-                        <button onClick={handleDeleteAccount} className="btn" style={{ background: 'var(--danger)', color: '#fff', padding: '0.75rem 1.5rem' }} disabled={loading}>
-                            {loading ? 'Deleting…' : 'Delete My Account'}
-                        </button>
+                        {!showDeleteConfirm ? (
+                            <button
+                                onClick={() => setShowDeleteConfirm(true)}
+                                className="btn"
+                                style={{ background: 'var(--danger)', color: '#fff', padding: '0.75rem 1.5rem' }}
+                                disabled={loading}
+                            >
+                                Delete My Account
+                            </button>
+                        ) : (
+                            <div className="fade-in">
+                                <p style={{ color: '#fca5a5', fontWeight: '600', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                                    Type <strong>DELETE</strong> below to permanently delete your account:
+                                </p>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={deleteConfirmText}
+                                    onChange={e => setDeleteConfirmText(e.target.value)}
+                                    placeholder="Type DELETE to confirm"
+                                    style={{ marginBottom: '0.875rem', borderColor: 'rgba(239,68,68,0.5)' }}
+                                    autoFocus
+                                />
+                                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                    <button
+                                        onClick={handleDeleteAccount}
+                                        className="btn"
+                                        style={{ background: 'var(--danger)', color: '#fff', padding: '0.75rem 1.25rem', opacity: deleteConfirmText !== 'DELETE' ? 0.5 : 1 }}
+                                        disabled={deleteConfirmText !== 'DELETE' || loading}
+                                    >
+                                        {loading ? 'Deleting…' : 'Confirm Delete'}
+                                    </button>
+                                    <button
+                                        onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
+                                        className="btn btn-outline"
+                                        style={{ padding: '0.75rem 1.25rem' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

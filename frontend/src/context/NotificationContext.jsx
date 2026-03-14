@@ -48,7 +48,7 @@ export const NotificationProvider = ({ children }) => {
         toast(message, {
             duration: 4500,
             position: 'top-right',
-            icon: '⚠️',
+            icon: '!',
             style: {
                 background: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
@@ -61,7 +61,7 @@ export const NotificationProvider = ({ children }) => {
         toast(message, {
             duration: 4000,
             position: 'top-right',
-            icon: 'ℹ️',
+            icon: 'i',
             style: {
                 background: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
