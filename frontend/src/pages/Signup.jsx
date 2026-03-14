@@ -36,91 +36,33 @@ const Signup = () => {
   return (
     <div
       className="flex-center"
-      style={{
-        minHeight: '100vh',
-        padding: '2rem',
-        background: 'linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
+      style={{ minHeight: '100vh', padding: '2rem', background: 'linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%)', position: 'relative', overflow: 'hidden' }}
     >
-      {/* Animated Background Orbs */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-10%',
-          right: '-10%',
-          width: '40%',
-          height: '40%',
-          background:
-            'radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%)',
-          borderRadius: '50%',
-          filter: 'blur(60px)',
-          animation: 'float 20s ease-in-out infinite',
-        }}
-      ></div>
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '-10%',
-          left: '-10%',
-          width: '40%',
-          height: '40%',
-          background:
-            'radial-gradient(circle, rgba(118, 75, 162, 0.15) 0%, transparent 70%)',
-          borderRadius: '50%',
-          filter: 'blur(60px)',
-          animation: 'float 25s ease-in-out infinite reverse',
-        }}
-      ></div>
+      {/* Background Orbs */}
+      <div style={{ position: 'absolute', top: '-15%', right: '-15%', width: '45%', height: '45%', background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(70px)', animation: 'float 22s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', bottom: '-15%', left: '-15%', width: '45%', height: '45%', background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(70px)', animation: 'float 28s ease-in-out infinite reverse' }} />
 
       <style>{`
         @keyframes float {
           0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -30px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
+          33% { transform: translate(30px, -30px) scale(1.08); }
+          66% { transform: translate(-20px, 20px) scale(0.94); }
         }
       `}</style>
 
-      <div
-        className="card scale-in"
-        style={{
-          maxWidth: '550px',
-          width: '100%',
-          boxShadow: 'var(--shadow-xl), var(--shadow-glow)',
-        }}
-      >
+      <div className="card scale-in" style={{ maxWidth: '520px', width: '100%', boxShadow: 'var(--shadow-xl), var(--shadow-glow)' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div
-            style={{
-              fontSize: '4rem',
-              marginBottom: '1rem',
-              background: 'var(--gradient-primary)',
-              borderRadius: '50%',
-              width: '100px',
-              height: '100px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1.5rem',
-              boxShadow: 'var(--shadow-glow)',
-            }}
-          >
-            ✨
+          <div style={{ background: 'var(--gradient-primary)', borderRadius: '50%', width: '68px', height: '68px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', boxShadow: 'var(--shadow-glow)' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+              <path d="M12 6v2m0 8v2m-2.5-9.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5c0 2.5-5 2.5-5 5h5"/>
+            </svg>
           </div>
-          <h1
-            style={{
-              fontSize: '2.5rem',
-              marginBottom: '0.5rem',
-              background: 'var(--gradient-primary)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.375rem', background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Create Account
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', margin: 0 }}>
             Start tracking your finances today
           </p>
         </div>
@@ -148,57 +90,23 @@ const Signup = () => {
               <label className="form-label">👤 Full Name</label>
               <input
                 type="text"
-                name="name"
-                className="form-input"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="John Doe"
-                required
-                autoFocus
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">💵 Currency</label>
-              <select
-                name="currency"
-                className="form-select"
-                value={formData.currency}
-                onChange={handleChange}
-              >
-                <option value="USD">🇺🇸 USD - US Dollar</option>
-                <option value="EUR">🇪🇺 EUR - Euro</option>
-                <option value="GBP">🇬🇧 GBP - British Pound</option>
-                <option value="INR">🇮🇳 INR - Indian Rupee</option>
-                <option value="JPY">🇯🇵 JPY - Japanese Yen</option>
-                <option value="CAD">🇨🇦 CAD - Canadian Dollar</option>
-                <option value="AUD">🇦🇺 AUD - Australian Dollar</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">📧 Email Address</label>
-            <input
-              type="email"
-              name="email"
-              className="form-input"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="john@example.com"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">🔒 Password</label>
-            <input
-              type="password"
-              name="password"
-              className="form-input"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Minimum 6 characters"
+                    <label className="form-label">Full Name</label>
+                    <label className="form-label">Currency</label>
+                      <option value="USD">USD — US Dollar</option>
+                      <option value="EUR">EUR — Euro</option>
+                      <option value="GBP">GBP — British Pound</option>
+                      <option value="INR">INR — Indian Rupee</option>
+                      <option value="JPY">JPY — Japanese Yen</option>
+                      <option value="CAD">CAD — Canadian Dollar</option>
+                      <option value="AUD">AUD — Australian Dollar</option>
+                    <label className="form-label">Email Address</label>
+                    <label className="form-label">Password</label>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.375rem' }}>
+                    Minimum 6 characters required
+                  </p>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', fontSize: '1rem', marginTop: '0.5rem' }} disabled={loading}>
+                  {loading ? 'Creating account…' : 'Create Account'}
+                </button>
               minLength={6}
               required
             />
@@ -256,14 +164,12 @@ const Signup = () => {
         >
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
             Already have an account?
-          </p>
-          <Link
-            to="/login"
-            className="btn btn-outline"
-            style={{ width: '100%' }}
-          >
-            🔑 Login Instead
-          </Link>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '0.875rem', fontSize: '0.9rem' }}>
+              Already have an account?
+            </p>
+            <Link to="/login" className="btn btn-outline" style={{ width: '100%' }}>
+              Sign In Instead
+            </Link>
         </div>
       </div>
     </div>
