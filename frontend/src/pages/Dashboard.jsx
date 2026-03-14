@@ -176,6 +176,7 @@ const Dashboard = () => {
     expense: item.expense || 0,
     balance: item.balance || 0,
   }));
+  const hasTrendData = trendSeries.length > 0;
 
   const latestTrend = trendSeries[trendSeries.length - 1] || { income: 0, expense: 0, balance: 0 };
   const previousTrend = trendSeries[trendSeries.length - 2] || latestTrend;
@@ -215,7 +216,7 @@ const Dashboard = () => {
       percentage: cat.percentage,
     })) || [];
 
-  const topCategory = insights?.topCategory?.category?.name || expenseChartData[0]?.label || 'No dominant category';
+  const topCategory = insights?.topCategory?.category?.name || expenseChartData[0]?.label || 'No category data yet';
   const topCategorySpend = insights?.topCategory?.total || expenseChartData[0]?.value || 0;
   const topCategoryShare = expenseChartData[0]?.percentage || 0;
   const healthTone = budgetAlerts.length > 0 || balance < 0 ? 'warning' : 'positive';
@@ -237,10 +238,16 @@ const Dashboard = () => {
     },
     {
       title: 'Expense shift',
-      value: `${Math.abs(changePercentage).toFixed(1)}% ${changePercentage <= 0 ? 'lower' : 'higher'}`,
-      detail: changePercentage <= 0 ? 'Month-over-month burn is improving' : 'Monthly outflow is rising',
-      icon: changePercentage <= 0 ? ICONS.arrowDownRight : ICONS.arrowUpRight,
-      tone: changePercentage <= 0 ? 'positive' : 'warning',
+      value: hasTrendData
+        ? `${Math.abs(changePercentage).toFixed(1)}% ${changePercentage <= 0 ? 'lower' : 'higher'}`
+        : 'Waiting for monthly baseline',
+      detail: hasTrendData
+        ? (changePercentage <= 0 ? 'Month-over-month burn is improving' : 'Monthly outflow is rising')
+        : 'Add transactions over multiple months to unlock this signal',
+      icon: hasTrendData
+        ? (changePercentage <= 0 ? ICONS.arrowDownRight : ICONS.arrowUpRight)
+        : ICONS.pulse,
+      tone: hasTrendData ? (changePercentage <= 0 ? 'positive' : 'warning') : 'neutral',
     },
   ];
 
@@ -250,7 +257,9 @@ const Dashboard = () => {
       value: formatCurrencyPrecise(income),
       tone: 'positive',
       icon: ICONS.income,
-      trendLabel: `${incomeDelta >= 0 ? '+' : ''}${incomeDelta.toFixed(1)}% vs prior month`,
+      trendLabel: hasTrendData
+        ? `${incomeDelta >= 0 ? '+' : ''}${incomeDelta.toFixed(1)}% vs prior month`
+        : 'No monthly trend data yet',
       chart: trends.map((item) => item.income || 0),
       chartColor: '#10b981',
     },
@@ -259,7 +268,9 @@ const Dashboard = () => {
       value: formatCurrencyPrecise(expense),
       tone: 'danger',
       icon: ICONS.expense,
-      trendLabel: `${expenseDelta >= 0 ? '+' : ''}${expenseDelta.toFixed(1)}% vs prior month`,
+      trendLabel: hasTrendData
+        ? `${expenseDelta >= 0 ? '+' : ''}${expenseDelta.toFixed(1)}% vs prior month`
+        : 'No monthly trend data yet',
       chart: trends.map((item) => item.expense || 0),
       chartColor: '#ef4444',
     },
@@ -268,7 +279,9 @@ const Dashboard = () => {
       value: formatCurrencyPrecise(balance),
       tone: balance >= 0 ? 'positive' : 'danger',
       icon: ICONS.balance,
-      trendLabel: `${balanceDelta >= 0 ? '+' : ''}${balanceDelta.toFixed(1)}% balance swing`,
+      trendLabel: hasTrendData
+        ? `${balanceDelta >= 0 ? '+' : ''}${balanceDelta.toFixed(1)}% balance swing`
+        : 'No monthly trend data yet',
       chart: trends.map((item) => item.balance || 0),
       chartColor: balance >= 0 ? '#22c55e' : '#f97316',
     },
@@ -286,20 +299,20 @@ const Dashboard = () => {
   const signalCards = [
     {
       title: 'Average monthly income',
-      value: formatCurrency(avgIncome),
-      supporting: 'Six-month average inflow',
+      value: hasTrendData ? formatCurrency(avgIncome) : 'Not enough data yet',
+      supporting: hasTrendData ? 'Six-month average inflow' : 'Track monthly income to see this metric',
       icon: ICONS.spark,
     },
     {
       title: 'Average monthly expense',
-      value: formatCurrency(avgExpense),
-      supporting: 'Six-month average outflow',
+      value: hasTrendData ? formatCurrency(avgExpense) : 'Not enough data yet',
+      supporting: hasTrendData ? 'Six-month average outflow' : 'Track monthly expenses to see this metric',
       icon: ICONS.pulse,
     },
     {
       title: 'Strongest month',
-      value: strongestMonth?.month || PERIOD_LABELS[period],
-      supporting: formatCurrency(strongestMonth?.balance || 0),
+      value: hasTrendData ? strongestMonth?.month : 'Not enough data yet',
+      supporting: hasTrendData ? formatCurrency(strongestMonth?.balance || 0) : 'Compare multiple months to rank performance',
       icon: ICONS.target,
     },
   ];
@@ -434,7 +447,15 @@ const Dashboard = () => {
             <p>Income and expense movement across the last six months.</p>
           </div>
           <div className="dashboard-chart-frame">
-            <SpendingTrendsChart data={trendSeries} currency={user?.currency || 'USD'} />
+            {hasTrendData ? (
+              <SpendingTrendsChart data={trendSeries} currency={user?.currency || 'USD'} />
+            ) : (
+              <div className="empty-state dashboard-chart-empty">
+                <div className="empty-state-icon dashboard-empty-icon">{ICONS.pulse}</div>
+                <div className="empty-state-title">No trend data available yet</div>
+                <div className="empty-state-description">Add transactions in upcoming months to unlock cash flow trajectory insights.</div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -511,7 +532,15 @@ const Dashboard = () => {
             <p>Side-by-side monthly comparison to expose margin compression.</p>
           </div>
           <div className="dashboard-chart-frame">
-            <MonthlyComparisonChart data={trendSeries} currency={user?.currency || 'USD'} />
+            {hasTrendData ? (
+              <MonthlyComparisonChart data={trendSeries} currency={user?.currency || 'USD'} />
+            ) : (
+              <div className="empty-state dashboard-chart-empty">
+                <div className="empty-state-icon dashboard-empty-icon">{ICONS.spark}</div>
+                <div className="empty-state-title">No month-over-month comparison yet</div>
+                <div className="empty-state-description">As data accumulates, this chart will compare income and expense by month.</div>
+              </div>
+            )}
           </div>
         </div>
       </section>

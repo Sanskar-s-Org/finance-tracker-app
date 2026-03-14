@@ -1323,6 +1323,10 @@ pre code {
     margin-top: 1rem;
 }
 
+.dashboard-chart-empty {
+    min-height: 220px;
+}
+
 .dashboard-side-stack {
     display: flex;
     flex-direction: column;
@@ -1536,6 +1540,10 @@ pre code {
         grid-template-columns: 1fr;
     }
 
+    .dashboard-stat-card {
+        min-height: 158px;
+    }
+
     .dashboard-title {
         font-size: 1.8rem;
     }
@@ -1554,14 +1562,73 @@ pre code {
         align-items: flex-start;
     }
 
+    .dashboard-section-header h3 {
+        font-size: 0.98rem;
+    }
+
+    .dashboard-section-header p {
+        font-size: 0.8rem;
+    }
+
     .donut-chart-layout {
-        gap: 1.5rem !important;
+        gap: 1.15rem !important;
+        flex-direction: column;
+        align-items: stretch !important;
     }
 
     .donut-chart-legend {
         min-width: 0 !important;
         max-width: none !important;
         width: 100%;
+    }
+
+    .donut-chart-visual {
+        display: flex;
+        justify-content: center;
+    }
+
+    .donut-chart-visual svg {
+        width: 188px;
+        height: 188px;
+    }
+
+    .dashboard-chart-empty {
+        min-height: 180px;
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .dashboard-hero-badges {
+        gap: 0.55rem;
+    }
+
+    .dashboard-badge {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .dashboard-insight-card,
+    .dashboard-signal-card {
+        min-height: 0;
+    }
+
+    .dashboard-stat-value {
+        font-size: 1.55rem;
+    }
+
+    .donut-chart-visual svg {
+        width: 172px;
+        height: 172px;
+    }
+
+    .dashboard-chart-card,
+    .dashboard-list-card,
+    .dashboard-brief-card,
+    .dashboard-actions-card,
+    .dashboard-recent-card {
+        padding: 0.9rem !important;
     }
 }
 
