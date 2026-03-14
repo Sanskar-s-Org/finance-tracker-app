@@ -35,6 +35,7 @@ export default defineConfig({
         share_target: {
           action: '/transactions',
           method: 'GET',
+          enctype: 'application/x-www-form-urlencoded',
           params: {
             text: 'shared_text',
             title: 'shared_title',
