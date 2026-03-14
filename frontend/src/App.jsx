@@ -85,6 +85,8 @@ function App() {
           element={
             <PrivateRoute>
               <AppLayout />
+            </PrivateRoute>
+          }
         />
       </Routes>
     </BrowserRouter>
