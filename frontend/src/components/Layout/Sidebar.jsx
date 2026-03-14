@@ -2,6 +2,19 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect } from 'react';
 
+const getUserInitials = (name) => {
+  if (!name) {
+    return '';
+  }
+
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('');
+};
+
 // ── SVG Icon Library ──────────────────────────────────────────────────────────
 const Icon = {
   dashboard: (
@@ -38,6 +51,12 @@ const Icon = {
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   ),
+  user: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21a8 8 0 0 0-16 0" />
+      <circle cx="12" cy="8" r="4" />
+    </svg>
+  ),
   logout: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -63,11 +82,11 @@ const Icon = {
 };
 
 const NAV_LINKS = [
-  { to: '/dashboard', label: 'Dashboard', icon: Icon.dashboard },
-  { to: '/transactions', label: 'Transactions', icon: Icon.transactions },
-  { to: '/budgets', label: 'Budgets', icon: Icon.budgets },
-  { to: '/reports', label: 'Reports', icon: Icon.reports },
-  { to: '/settings', label: 'Settings', icon: Icon.settings },
+  { to: '/dashboard', label: 'Dashboard', caption: 'Net worth and activity', icon: Icon.dashboard },
+  { to: '/transactions', label: 'Transactions', caption: 'Income and spending flow', icon: Icon.transactions },
+  { to: '/budgets', label: 'Budgets', caption: 'Targets and guardrails', icon: Icon.budgets },
+  { to: '/reports', label: 'Reports', caption: 'Patterns and exports', icon: Icon.reports },
+  { to: '/settings', label: 'Settings', caption: 'Preferences and profile', icon: Icon.settings },
 ];
 
 // ── Sidebar Component ─────────────────────────────────────────────────────────
@@ -75,6 +94,8 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const activeLink = NAV_LINKS.find((link) => location.pathname === link.to) || NAV_LINKS[0];
+  const userInitials = getUserInitials(user?.name);
 
   const handleLogout = async () => {
     onMobileClose?.();
@@ -82,7 +103,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
     navigate('/login');
   };
 
-  const sidebarW = collapsed ? '68px' : '240px';
+  const sidebarW = collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)';
 
   return (
     <>
@@ -101,9 +122,9 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
 
       <aside
         style={{
-          width: sidebarW,
+          width: mobileOpen ? 'min(88vw, 320px)' : sidebarW,
           minHeight: '100vh',
-          background: 'var(--sidebar-bg)',
+          background: 'linear-gradient(180deg, rgba(8, 14, 30, 0.98) 0%, rgba(8, 14, 30, 0.94) 42%, rgba(12, 20, 40, 0.98) 100%)',
           borderRight: '1px solid var(--border)',
           display: 'flex',
           flexDirection: 'column',
@@ -123,12 +144,23 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
             {Icon.logo}
           </div>
           {!collapsed && (
-            <div className="sidebar-logo-text">
-              <span className="sidebar-brand">FinTracker</span>
-              <span className="sidebar-brand-badge">PRO</span>
+            <div className="sidebar-logo-copy">
+              <div className="sidebar-logo-text">
+                <span className="sidebar-brand">FinTracker</span>
+                <span className="sidebar-brand-badge">PRO</span>
+              </div>
+              <span className="sidebar-brand-subtitle">Personal wealth command center</span>
             </div>
           )}
         </div>
+
+        {mobileOpen && !collapsed && (
+          <div className="sidebar-mobile-summary">
+            <span className="sidebar-mobile-summary-label">Current space</span>
+            <strong>{activeLink.label}</strong>
+            <span>{activeLink.caption}</span>
+          </div>
+        )}
 
         {/* ── Navigation ── */}
         <nav style={{ flex: 1, padding: '0.5rem 0', overflowY: 'auto', overflowX: 'hidden' }}>
@@ -147,8 +179,15 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
                   className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
                   style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
                 >
-                  <span className="sidebar-link-icon">{link.icon}</span>
-                  {!collapsed && <span className="sidebar-link-label">{link.label}</span>}
+                  <span className={`sidebar-link-icon-shell ${isActive ? 'sidebar-link-icon-shell-active' : ''}`}>
+                    <span className="sidebar-link-icon">{link.icon}</span>
+                  </span>
+                  {!collapsed && (
+                    <span className="sidebar-link-copy">
+                      <span className="sidebar-link-label">{link.label}</span>
+                      <span className="sidebar-link-caption">{link.caption}</span>
+                    </span>
+                  )}
                   {!collapsed && isActive && <span className="sidebar-link-dot" />}
                 </Link>
               );
@@ -161,11 +200,12 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
           {!collapsed && (
             <div className="sidebar-user">
               <div className="sidebar-avatar">
-                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                {userInitials || Icon.user}
               </div>
               <div className="sidebar-user-info">
                 <span className="sidebar-user-name">{user?.name}</span>
                 <span className="sidebar-user-email">{user?.email}</span>
+                <span className="sidebar-user-status">Premium workspace</span>
               </div>
             </div>
           )}
@@ -175,7 +215,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
             className="sidebar-logout"
             style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
           >
-            <span style={{ flexShrink: 0, display: 'flex', color: 'var(--danger)' }}>{Icon.logout}</span>
+            <span className="sidebar-logout-icon">{Icon.logout}</span>
             {!collapsed && <span>Logout</span>}
           </button>
         </div>
@@ -195,7 +235,13 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
 
 // ── Mobile Top Bar ─────────────────────────────────────────────────────────────
 export const MobileTopBar = ({ onMenuOpen, title }) => {
+  const { user } = useAuth();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const activeLink = NAV_LINKS.find((link) => location.pathname === link.to);
+  const userInitials = getUserInitials(user?.name);
+  const currentTitle = title || activeLink?.label || 'FinTracker';
+  const currentSubtitle = activeLink?.caption || 'Premium finance workspace';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -227,11 +273,17 @@ export const MobileTopBar = ({ onMenuOpen, title }) => {
         }}>
           {Icon.logo}
         </div>
-        <span style={{ fontWeight: '700', fontSize: '1rem', background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          FinTracker
-        </span>
+        <div className="mobile-topbar-copy">
+          <span className="mobile-topbar-title">{currentTitle}</span>
+          <span className="mobile-topbar-subtitle">{currentSubtitle}</span>
+        </div>
       </div>
-      <div style={{ width: '40px' }} />
+      <div className="mobile-topbar-actions">
+        <span className="mobile-topbar-chip">Live</span>
+        <div className="mobile-topbar-avatar" title={user?.name || 'Account'}>
+          {userInitials || Icon.user}
+        </div>
+      </div>
     </header>
   );
 };

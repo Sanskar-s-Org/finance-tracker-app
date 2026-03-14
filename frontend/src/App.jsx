@@ -58,7 +58,7 @@ const AppLayout = () => {
       <MobileTopBar onMenuOpen={() => setMobileMenuOpen(true)} />
       <main
         className="app-content"
-        style={{ marginLeft: sidebarCollapsed ? '68px' : '240px' }}
+        style={{ marginLeft: sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)' }}
       >
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
