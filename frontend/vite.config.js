@@ -31,7 +31,16 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any maskable'
           }
-        ]
+        ],
+        share_target: {
+          action: '/transactions',
+          method: 'GET',
+          params: {
+            text: 'shared_text',
+            title: 'shared_title',
+            url: 'shared_url'
+          }
+        }
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
