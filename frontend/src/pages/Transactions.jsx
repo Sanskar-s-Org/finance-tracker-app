@@ -2,6 +2,24 @@ import { useEffect, useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../context/AuthContext';
 
+const ActionIcons = {
+  edit: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+  ),
+  delete: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  ),
+};
+
 const Transactions = () => {
   const {
     transactions,
@@ -194,6 +212,29 @@ const Transactions = () => {
       style: 'currency',
       currency: user?.currency || 'USD',
     }).format(amount);
+
+  const renderTransactionActions = (transaction, compact = false) => (
+    <div className={`transaction-action-cluster ${compact ? 'transaction-action-cluster-compact' : ''}`}>
+      <button
+        type="button"
+        onClick={() => handleEdit(transaction)}
+        className="transaction-action-btn transaction-action-btn-edit"
+        title="Edit transaction"
+        aria-label={`Edit ${transaction.description || transaction.category.name}`}
+      >
+        <span className="transaction-action-icon">{ActionIcons.edit}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => handleDelete(transaction._id)}
+        className="transaction-action-btn transaction-action-btn-delete"
+        title="Delete transaction"
+        aria-label={`Delete ${transaction.description || transaction.category.name}`}
+      >
+        <span className="transaction-action-icon">{ActionIcons.delete}</span>
+      </button>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -595,44 +636,7 @@ const Transactions = () => {
                         </span>
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                          <button
-                            onClick={() => handleEdit(transaction)}
-                            className="btn btn-primary"
-                            style={{
-                              padding: '0.5rem',
-                              fontSize: '1rem',
-                              minWidth: 'auto',
-                              width: '36px',
-                              height: '36px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: 'var(--radius-md)'
-                            }}
-                            title="Edit transaction"
-                          >
-                            ✎
-                          </button>
-                          <button
-                            onClick={() => handleDelete(transaction._id)}
-                            className="btn btn-danger"
-                            style={{
-                              padding: '0.5rem',
-                              fontSize: '1.125rem',
-                              minWidth: 'auto',
-                              width: '36px',
-                              height: '36px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: 'var(--radius-md)'
-                            }}
-                            title="Delete transaction"
-                          >
-                            ×
-                          </button>
-                        </div>
+                        {renderTransactionActions(transaction)}
                       </td>
                     </tr>
                   ))}
@@ -675,42 +679,7 @@ const Transactions = () => {
                       {transaction.type}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => handleEdit(transaction)}
-                      className="btn btn-primary"
-                      style={{
-                        padding: '0.5rem',
-                        fontSize: '0.875rem',
-                        minWidth: 'auto',
-                        width: '36px',
-                        height: '36px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      title="Edit"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      onClick={() => handleDelete(transaction._id)}
-                      className="btn btn-danger"
-                      style={{
-                        padding: '0.5rem',
-                        fontSize: '1rem',
-                        minWidth: 'auto',
-                        width: '36px',
-                        height: '36px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      title="Delete"
-                    >
-                      ×
-                    </button>
-                  </div>
+                  {renderTransactionActions(transaction, true)}
                 </div>
               </div>
             ))}

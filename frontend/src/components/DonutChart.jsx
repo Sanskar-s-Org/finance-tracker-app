@@ -6,7 +6,14 @@ const DonutChart = ({ data, title, centerValue, centerLabel }) => {
   if (total === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '0.5rem', opacity: 0.5 }}>📊</div>
+        <div className="dashboard-empty-icon" style={{ margin: '0 auto 0.5rem' }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19h16" />
+            <path d="M7 15V9" />
+            <path d="M12 15V5" />
+            <path d="M17 15v-3" />
+          </svg>
+        </div>
         <p>No expense data available</p>
       </div>
     );
@@ -33,9 +40,9 @@ const DonutChart = ({ data, title, centerValue, centerLabel }) => {
   });
 
   return (
-    <div style={{ width: '100%' }}>
+    <div className="donut-chart-shell" style={{ width: '100%' }}>
       {/* Main container with chart and legend side by side */}
-      <div style={{
+      <div className="donut-chart-layout" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -43,7 +50,7 @@ const DonutChart = ({ data, title, centerValue, centerLabel }) => {
         flexWrap: 'wrap'
       }}>
         {/* Chart */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div className="donut-chart-visual" style={{ position: 'relative', flexShrink: 0 }}>
           <svg
             width={size}
             height={size}
@@ -115,7 +122,7 @@ const DonutChart = ({ data, title, centerValue, centerLabel }) => {
         </div>
 
         {/* Legend - Clean and organized */}
-        <div style={{
+        <div className="donut-chart-legend" style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '0.875rem',
@@ -126,6 +133,7 @@ const DonutChart = ({ data, title, centerValue, centerLabel }) => {
           {data.map((item, index) => (
             <div
               key={index}
+              className="donut-chart-legend-item"
               style={{
                 display: 'flex',
                 alignItems: 'center',
