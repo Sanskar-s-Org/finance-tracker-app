@@ -323,9 +323,9 @@ const Transactions = () => {
 
       {/* ── Toolbar ── */}
       <div className="card" style={{ padding: '0.875rem 1rem', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Search */}
-          <div className="search-input-wrapper" style={{ flex: '1 1 180px', minWidth: '160px' }}>
+        <div className="tx-toolbar">
+          {/* Search — always full width on mobile */}
+          <div className="search-input-wrapper tx-toolbar-search">
             <span className="search-input-icon">{Icons.search}</span>
             <input
               type="text"
@@ -337,42 +337,45 @@ const Transactions = () => {
             />
           </div>
 
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            className="form-select"
-            style={{ flex: '0 1 160px', minWidth: '130px', padding: '0.65rem 2.5rem 0.65rem 0.875rem', fontSize: '0.875rem' }}
-          >
-            <option value="date-desc">Newest first</option>
-            <option value="date-asc">Oldest first</option>
-            <option value="amount-desc">Highest amount</option>
-            <option value="amount-asc">Lowest amount</option>
-            <option value="category">By category</option>
-          </select>
+          {/* Controls row — sort + page-size + filter trigger stay inline */}
+          <div className="tx-toolbar-controls">
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              className="form-select tx-sort-select"
+              style={{ padding: '0.65rem 2.5rem 0.65rem 0.875rem', fontSize: '0.875rem' }}
+            >
+              <option value="date-desc">Newest first</option>
+              <option value="date-asc">Oldest first</option>
+              <option value="amount-desc">Highest amount</option>
+              <option value="amount-asc">Lowest amount</option>
+              <option value="category">By category</option>
+            </select>
 
-          {/* Per page */}
-          <select
-            value={pageSize}
-            onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-            className="form-select"
-            style={{ flex: '0 1 110px', minWidth: '100px', padding: '0.65rem 2.5rem 0.65rem 0.875rem', fontSize: '0.875rem' }}
-          >
-            <option value="10">10 / page</option>
-            <option value="25">25 / page</option>
-            <option value="50">50 / page</option>
-            <option value="100">100 / page</option>
-          </select>
+            {/* Per page */}
+            <select
+              value={pageSize}
+              onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+              className="form-select tx-page-select"
+              style={{ padding: '0.65rem 2.5rem 0.65rem 0.875rem', fontSize: '0.875rem' }}
+            >
+              <option value="10">10 / page</option>
+              <option value="25">25 / page</option>
+              <option value="50">50 / page</option>
+              <option value="100">100 / page</option>
+            </select>
 
-          {/* Filter toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`toolbar-btn${showFilters ? ' active' : ''}`}
-          >
-            {Icons.filter}
-            Filters
-            {hasActiveFilters && <span className="active-filter-dot" />}
-          </button>
+            {/* Filter toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`toolbar-btn${showFilters ? ' active' : ''}`}
+            >
+              {Icons.filter}
+              Filters
+              {hasActiveFilters && <span className="active-filter-dot" />}
+            </button>
+          </div>
         </div>
       </div>
 

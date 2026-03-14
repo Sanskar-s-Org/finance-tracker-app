@@ -98,19 +98,27 @@ const Reports = () => {
             if (filters.category) params.append('category', filters.category);
             if (filters.type) params.append('type', filters.type);
 
-            // Open the HTML report in a new window
-            // User can then use browser's Print function (Ctrl+P) to save as PDF
-            const url = `${api.defaults.baseURL}/export/report/pdf?${params.toString()}`;
-            const newWindow = window.open(url, '_blank');
+            // Fetch via axios so the Authorization header is sent, then open as a blob URL
+            const response = await api.get(`/export/report/pdf?${params.toString()}`, {
+                responseType: 'blob',
+            });
+
+            const blob = new Blob([response.data], { type: 'text/html' });
+            const blobUrl = window.URL.createObjectURL(blob);
+            const newWindow = window.open(blobUrl, '_blank');
 
             if (!newWindow) {
+                window.URL.revokeObjectURL(blobUrl);
                 showError('Please allow popups to view the PDF report');
                 return;
             }
 
-            showSuccess('Report opened in new window - use Print (Ctrl+P) to save as PDF');
+            // Revoke the object URL after the window has had time to load it
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 15000);
+
+            showSuccess('Report opened in new window — use Print (Ctrl+P) to save as PDF');
         } catch (err) {
-            showError('Failed to export PDF');
+            showError('Failed to generate report. Please try again.');
         }
     };
 
