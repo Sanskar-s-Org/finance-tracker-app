@@ -16,6 +16,20 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 
+// Compact Y-axis formatter: ₹1.2L, ₹45K, ₹900 etc.
+const formatYAxis = (value, currency = 'USD') => {
+    if (value === 0) return '0';
+    const abs = Math.abs(value);
+    const sign = value < 0 ? '-' : '';
+    // Determine currency symbol
+    const sym = new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 })
+        .format(0).replace(/[\d,\s]/g, '').trim() || '';
+    if (abs >= 10_000_000) return `${sign}${sym}${(abs / 10_000_000).toFixed(1)}Cr`;
+    if (abs >= 100_000)    return `${sign}${sym}${(abs / 100_000).toFixed(1)}L`;
+    if (abs >= 1_000)      return `${sign}${sym}${(abs / 1_000).toFixed(1)}K`;
+    return `${sign}${sym}${abs}`;
+};
+
 // Custom Tooltip Component
 const CustomTooltip = ({ active, payload, label, currency = 'USD' }) => {
     if (active && payload && payload.length) {
@@ -56,7 +70,7 @@ const CustomTooltip = ({ active, payload, label, currency = 'USD' }) => {
 export const SpendingTrendsChart = ({ data, currency = 'USD' }) => {
     return (
         <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={data}>
+            <AreaChart data={data} margin={{ left: 10, right: 8, top: 8, bottom: 0 }}>
                 <defs>
                     <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -68,8 +82,13 @@ export const SpendingTrendsChart = ({ data, currency = 'USD' }) => {
                     </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="month" stroke="var(--text-secondary)" />
-                <YAxis stroke="var(--text-secondary)" />
+                <XAxis dataKey="month" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+                <YAxis
+                    stroke="var(--text-secondary)"
+                    tick={{ fontSize: 12 }}
+                    width={68}
+                    tickFormatter={(v) => formatYAxis(v, currency)}
+                />
                 <Tooltip content={<CustomTooltip currency={currency} />} />
                 <Legend />
                 <Area
@@ -133,10 +152,15 @@ export const CategoryPieChart = ({ data }) => {
 export const MonthlyComparisonChart = ({ data, currency = 'USD' }) => {
     return (
         <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data}>
+            <BarChart data={data} margin={{ left: 10, right: 8, top: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="month" stroke="var(--text-secondary)" />
-                <YAxis stroke="var(--text-secondary)" />
+                <XAxis dataKey="month" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+                <YAxis
+                    stroke="var(--text-secondary)"
+                    tick={{ fontSize: 12 }}
+                    width={68}
+                    tickFormatter={(v) => formatYAxis(v, currency)}
+                />
                 <Tooltip content={<CustomTooltip currency={currency} />} />
                 <Legend />
                 <Bar dataKey="income" fill="#10b981" radius={[8, 8, 0, 0]} />
