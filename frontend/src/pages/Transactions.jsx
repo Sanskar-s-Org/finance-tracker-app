@@ -99,6 +99,7 @@ const Transactions = () => {
   const [pageSize, setPageSize] = useState(25);
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -118,7 +119,7 @@ const Transactions = () => {
     // We need categories to be loaded before we can match categoryHint.
     // Store parsed result; the category-matching runs once categories arrive.
     setSharedBanner(parsed);
-  }, [location.search]);
+  }, [location.search, navigate]);
 
   // Once categories are loaded, apply the shared receipt to the form
   useEffect(() => {
@@ -148,8 +149,8 @@ const Transactions = () => {
   const loadData = async () => {
     try {
       await Promise.all([fetchTransactions(), fetchCategories()]);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setFormError('Failed to load data. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -157,6 +158,7 @@ const Transactions = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    setFormError('');
     try {
       if (editingId) {
         await updateTransaction(editingId, formData);
@@ -175,7 +177,7 @@ const Transactions = () => {
       setShowForm(false);
       await fetchTransactions();
     } catch (err) {
-      alert(editingId ? 'Error updating transaction' : 'Error creating transaction');
+      setFormError(err?.response?.data?.message || (editingId ? 'Failed to update transaction.' : 'Failed to save transaction.'));
     }
   };
 
@@ -203,14 +205,15 @@ const Transactions = () => {
     });
     setEditingId(null);
     setShowForm(false);
+    setFormError('');
   };
 
   const handleDelete = async id => {
     try {
       await deleteTransaction(id);
       await fetchTransactions();
-    } catch (err) {
-      alert('Error deleting transaction');
+    } catch {
+      setFormError('Failed to delete transaction. Please try again.');
     } finally {
       setConfirmDeleteId(null);
     }
@@ -294,9 +297,9 @@ const Transactions = () => {
   const expenseCategories = categories.filter(c => c.type === formData.type);
 
   const formatCurrency = amount =>
-    new Intl.NumberFormat('en-US', {
+    new Intl.NumberFormat(navigator.language || 'en-IN', {
       style: 'currency',
-      currency: user?.currency || 'USD',
+      currency: user?.currency || 'INR',
     }).format(amount);
 
   const renderTransactionActions = (transaction) => (
@@ -483,6 +486,7 @@ const Transactions = () => {
                 <option value="">All methods</option>
                 <option value="cash">Cash</option>
                 <option value="card">Card</option>
+                <option value="upi">UPI</option>
                 <option value="bank_transfer">Bank transfer</option>
                 <option value="other">Other</option>
               </select>
@@ -535,6 +539,7 @@ const Transactions = () => {
                 <select className="form-select" value={formData.paymentMethod} onChange={e => setFormData({ ...formData, paymentMethod: e.target.value })}>
                   <option value="cash">Cash</option>
                   <option value="card">Card</option>
+                  <option value="upi">UPI</option>
                   <option value="bank_transfer">Bank transfer</option>
                   <option value="other">Other</option>
                 </select>
@@ -552,7 +557,11 @@ const Transactions = () => {
                 Cancel
               </button>
             </div>
-          </form>
+            {formError && (
+              <p style={{ marginTop: '0.875rem', color: 'var(--danger)', fontSize: '0.875rem', fontWeight: '500' }}>
+                {Icons.warn} {formError}
+              </p>
+            )}
         </div>
       )}
 

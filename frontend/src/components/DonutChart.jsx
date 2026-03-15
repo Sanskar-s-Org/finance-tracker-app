@@ -133,16 +133,7 @@ const DonutChart = ({ data, title, centerValue, centerLabel }) => {
           {data.map((item, index) => (
             <div
               key={index}
-              className="donut-chart-legend-item"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.625rem 0',
-                transition: 'all 0.2s ease',
-                cursor: 'pointer'
-              }}
-              className="legend-item-hover"
+              className="donut-chart-legend-item legend-item-hover"
             >
               {/* Color dot */}
               <div style={{

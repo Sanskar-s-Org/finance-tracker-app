@@ -30,7 +30,6 @@ export const FinanceProvider = ({ children }) => {
       setTransactions(data.data);
       return data;
     } catch (err) {
-      console.error('Error fetching transactions:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -43,7 +42,6 @@ export const FinanceProvider = ({ children }) => {
       setCategories(data.data);
       return data;
     } catch (err) {
-      console.error('Error fetching categories:', err);
       throw err;
     }
   }, []);
@@ -54,7 +52,6 @@ export const FinanceProvider = ({ children }) => {
       setBudgets(data.data);
       return data;
     } catch (err) {
-      console.error('Error fetching budgets:', err);
       throw err;
     }
   }, []);
@@ -65,7 +62,6 @@ export const FinanceProvider = ({ children }) => {
       setDashboard(data.data);
       return data;
     } catch (err) {
-      console.error('Error fetching dashboard:', err);
       throw err;
     }
   }, []);

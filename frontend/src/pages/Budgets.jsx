@@ -47,6 +47,7 @@ const Budgets = () => {
     alertThreshold: 80,
   });
   const [loading, setLoading] = useState(true);
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -64,8 +65,8 @@ const Budgets = () => {
 
       setBudgets(budgetsRes.data);
       setCategories(categoriesRes.data);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setFormError('Failed to load budgets. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -73,6 +74,7 @@ const Budgets = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    setFormError('');
     try {
       if (editingId) {
         await budgetService.update(editingId, formData);
@@ -90,7 +92,7 @@ const Budgets = () => {
       setShowForm(false);
       await loadData();
     } catch (err) {
-      alert(editingId ? 'Error updating budget' : 'Error creating budget');
+      setFormError(err?.response?.data?.message || (editingId ? 'Failed to update budget.' : 'Failed to save budget.'));
     }
   };
 
@@ -116,23 +118,24 @@ const Budgets = () => {
     });
     setEditingId(null);
     setShowForm(false);
+    setFormError('');
   };
 
   const handleDelete = async id => {
     try {
       await budgetService.delete(id);
       await loadData();
-    } catch (err) {
-      alert('Error deleting budget');
+    } catch {
+      setFormError('Failed to delete budget. Please try again.');
     } finally {
       setConfirmDeleteId(null);
     }
   };
 
   const formatCurrency = amount =>
-    new Intl.NumberFormat('en-US', {
+    new Intl.NumberFormat(navigator.language || 'en-IN', {
       style: 'currency',
-      currency: user?.currency || 'USD',
+      currency: user?.currency || 'INR',
     }).format(amount);
 
   if (loading) {
@@ -236,6 +239,11 @@ const Budgets = () => {
                 Cancel
               </button>
             </div>
+            {formError && (
+              <p style={{ marginTop: '0.875rem', color: 'var(--danger)', fontSize: '0.875rem', fontWeight: '500' }}>
+                {formError}
+              </p>
+            )}
           </form>
         </div>
       )}

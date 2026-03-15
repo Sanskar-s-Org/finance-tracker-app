@@ -27,8 +27,8 @@ const Reports = () => {
         try {
             const response = await api.get('/categories');
             setCategories(response.data.data);
-        } catch (err) {
-            console.error('Error loading categories:', err);
+        } catch {
+            // non-critical — category filter will just be empty
         }
     };
 
@@ -123,9 +123,9 @@ const Reports = () => {
     };
 
     const formatCurrency = amount => {
-        return new Intl.NumberFormat('en-US', {
+        return new Intl.NumberFormat(navigator.language || 'en-IN', {
             style: 'currency',
-            currency: user?.currency || 'USD',
+            currency: user?.currency || 'INR',
         }).format(amount);
     };
 
