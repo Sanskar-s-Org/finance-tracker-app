@@ -562,6 +562,7 @@ const Transactions = () => {
                 {Icons.warn} {formError}
               </p>
             )}
+          </form>
         </div>
       )}
 
